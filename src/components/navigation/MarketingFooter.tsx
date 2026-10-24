@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Sparkles, Mail, ShieldCheck, BookOpen, GraduationCap, Users } from "lucide-react";
+import { Sparkles, Mail, ShieldCheck, GraduationCap, Users } from "lucide-react";
 
 export function MarketingFooter() {
   return (
@@ -56,9 +56,25 @@ export function MarketingFooter() {
           {/* Role Portals */}
           <div className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#DCE4EE]/60">
-              Portals
+              Portals & Access
             </h4>
             <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/apply" className="text-[#168B83] font-semibold hover:underline transition-colors flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                  Apply for Admission
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="text-[#DCE4EE]/80 hover:text-white transition-colors">
+                  Portal Sign In
+                </Link>
+              </li>
+              <li>
+                <Link href="/sign-up?role=parent" className="text-[#DCE4EE]/80 hover:text-white transition-colors">
+                  Parent Registration
+                </Link>
+              </li>
               <li>
                 <Link href="/student" className="text-[#DCE4EE]/80 hover:text-white transition-colors flex items-center gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
@@ -69,17 +85,6 @@ export function MarketingFooter() {
                 <Link href="/parent" className="text-[#DCE4EE]/80 hover:text-white transition-colors flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" aria-hidden="true" />
                   Parent & Guardian Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/instructor" className="text-[#DCE4EE]/80 hover:text-white transition-colors flex items-center gap-1.5">
-                  <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-                  Instructor Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="text-[#DCE4EE]/80 hover:text-white transition-colors">
-                  Sign In / Register
                 </Link>
               </li>
             </ul>

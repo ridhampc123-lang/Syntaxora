@@ -92,7 +92,13 @@ export default async function AdminCoursesPage() {
                         {course.status}
                       </Badge>
                     </td>
-                    <td className="p-3.5 text-right whitespace-nowrap">
+                    <td className="p-3.5 text-right whitespace-nowrap space-x-2">
+                      <Link
+                        href={`/admin/courses/${course.id}`}
+                        className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#E8EFF8] text-[#3869AD] hover:bg-[#3869AD] hover:text-white text-xs font-semibold transition-colors"
+                      >
+                        Manage
+                      </Link>
                       <CoursePublishButton
                         courseId={course.id}
                         currentStatus={course.status}

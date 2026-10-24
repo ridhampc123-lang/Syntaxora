@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const NAV_LINKS = [
   { label: "Courses", href: "/courses" },
   { label: "Programs", href: "/programs" },
+  { label: "Admissions", href: "/apply" },
   { label: "About", href: "/about" },
   { label: "Instructors", href: "/instructors" },
   { label: "FAQ", href: "/faq" },
@@ -39,7 +40,7 @@ export function MarketingHeader() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6" aria-label="Main Navigation">
+        <nav className="hidden md:flex items-center gap-5" aria-label="Main Navigation">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -57,15 +58,15 @@ export function MarketingHeader() {
         </nav>
 
         {/* Action CTAs */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2.5">
           <Link href="/login">
             <Button variant="ghost" size="sm">
               Sign In
             </Button>
           </Link>
-          <Link href="/courses">
+          <Link href="/apply">
             <Button variant="primary" size="sm">
-              Explore Courses
+              Apply for Admission
               <ArrowRight className="h-4 w-4 ml-1" aria-hidden="true" />
             </Button>
           </Link>

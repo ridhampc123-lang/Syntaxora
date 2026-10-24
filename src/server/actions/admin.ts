@@ -270,3 +270,83 @@ export async function correctAttendanceAction(
     return { success: false, message: "Failed to correct attendance." };
   }
 }
+
+export async function reviewApplicationAction(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  const rawData = {
+    applicationId: formData.get("applicationId")?.toString() || "",
+    decision: formData.get("decision")?.toString() || "",
+    decisionReason: formData.get("decisionReason")?.toString() || "",
+    adminNotes: formData.get("adminNotes")?.toString() || "",
+  };
+
+  const { applicationReviewSchema } = await import("@/lib/validation/application");
+  const { updateApplicationReview } = await import("@/server/services/applicationService");
+
+  const validation = applicationReviewSchema.safeParse(rawData);
+  if (!validation.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of validation.error.issues) {
+      const path = issue.path[0]?.toString() || "form";
+      if (!errors[path]) errors[path] = [];
+      errors[path].push(issue.message);
+    }
+    return {
+      success: false,
+      message: "Please correct the review fields.",
+      errors,
+    };
+  }
+
+  const result = await updateApplicationReview(
+    validation.data.applicationId,
+    actor.userId,
+    validation.data.decision,
+    validation.data.decisionReason,
+    validation.data.adminNotes
+  );
+
+  if (result.success) {
+    await logAuditEvent(
+      actor.userId,
+      "APPLICATION_REVIEWED",
+      "STUDENT_APPLICATION",
+      validation.data.applicationId,
+      {
+        decision: validation.data.decision,
+        reason: validation.data.decisionReason,
+      }
+    );
+    revalidatePath("/admin/applications");
+    revalidatePath("/admin");
+  }
+
+  return result;
+}
+
+export async function resendStudentSetupEmailAction(
+  applicationId: string
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+  const { resendStudentSetupEmail } = await import("@/server/services/provisioningService");
+  const result = await resendStudentSetupEmail(applicationId, actor.userId);
+
+  await logAuditEvent(
+    actor.userId,
+    "STUDENT_SETUP_EMAIL_RESENT",
+    "STUDENT_APPLICATION",
+    applicationId,
+    { delivered: result.success, provider: result.provider }
+  );
+
+  return {
+    success: result.success,
+    message: result.message,
+  };
+}
+
+

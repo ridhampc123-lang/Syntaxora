@@ -12,6 +12,9 @@ import {
   FileText,
   LogOut,
   UserCheck,
+  ClipboardList,
+  Layers,
+  Video,
 } from "lucide-react";
 import { requireRole } from "@/server/services/authService";
 import { signOutAction } from "@/server/actions/auth";
@@ -19,11 +22,14 @@ import { Badge } from "@/components/ui/badge";
 
 const ADMIN_LINKS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "Student Applications", href: "/admin/applications", icon: ClipboardList },
   { label: "Students", href: "/admin/students", icon: GraduationCap },
   { label: "Guardians & Invites", href: "/admin/guardians", icon: ShieldCheck },
   { label: "Faculty / Instructors", href: "/admin/instructors", icon: UserCheck },
   { label: "Courses & Curricula", href: "/admin/courses", icon: BookOpen },
+  { label: "Batches & Cohorts", href: "/admin/batches", icon: Layers },
   { label: "Enrollments", href: "/admin/enrollments", icon: Users },
+  { label: "Live Class Center", href: "/admin/live-classes", icon: Video },
   { label: "Attendance Records", href: "/admin/attendance", icon: CalendarCheck },
   { label: "Admissions Enquiries", href: "/admin/enquiries", icon: Mail },
   { label: "Audit Logs", href: "/admin/audit-logs", icon: FileText },

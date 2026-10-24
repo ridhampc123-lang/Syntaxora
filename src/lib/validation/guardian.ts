@@ -48,3 +48,47 @@ export const revokeGuardianRelationshipSchema = z.object({
 });
 
 export type RevokeGuardianRelationshipInput = z.infer<typeof revokeGuardianRelationshipSchema>;
+
+export const requestStudentLinkSchema = z.object({
+  studentCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^STU-[0-9A-F]{8}$/, "Student code must be in the format STU-XXXXXXXX (8 uppercase characters)"),
+  relationshipType: z.enum(["parent", "legal_guardian", "other_authorized_guardian"]).default("parent"),
+});
+
+export type RequestStudentLinkInput = z.infer<typeof requestStudentLinkSchema>;
+
+export const adminApproveRelationshipSchema = z.object({
+  relationshipId: z.string().uuid("Invalid relationship ID"),
+  canViewAttendance: z.boolean().default(true),
+  canViewProgress: z.boolean().default(true),
+  canViewSchedule: z.boolean().default(true),
+  canViewFees: z.boolean().default(true),
+  canReceiveNotifications: z.boolean().default(true),
+  verificationMethod: z.string().min(3, "Verification method is required").default("admin_verified_code_request"),
+});
+
+export type AdminApproveRelationshipInput = z.infer<typeof adminApproveRelationshipSchema>;
+
+export const adminRejectRelationshipSchema = z.object({
+  relationshipId: z.string().uuid("Invalid relationship ID"),
+  rejectionReason: z.string().min(3, "Rejection reason must be at least 3 characters").max(500),
+});
+
+export type AdminRejectRelationshipInput = z.infer<typeof adminRejectRelationshipSchema>;
+
+export const adminDirectConnectSchema = z.object({
+  guardianEmail: z.string().email("Valid parent account email is required").transform((e) => e.toLowerCase().trim()),
+  studentCode: z.string().trim().toUpperCase().regex(/^STU-[0-9A-F]{8}$/, "Invalid student code format"),
+  relationshipType: z.enum(["parent", "legal_guardian", "other_authorized_guardian"]).default("parent"),
+  canViewAttendance: z.boolean().default(true),
+  canViewProgress: z.boolean().default(true),
+  canViewSchedule: z.boolean().default(true),
+  canViewFees: z.boolean().default(true),
+  canReceiveNotifications: z.boolean().default(true),
+  verificationMethod: z.string().min(3, "Verification method required").default("admin_assisted_connection"),
+});
+
+export type AdminDirectConnectInput = z.infer<typeof adminDirectConnectSchema>;

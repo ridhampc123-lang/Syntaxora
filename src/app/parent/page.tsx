@@ -10,13 +10,17 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { requireRole } from "@/server/services/authService";
-import { getActiveChildrenForGuardian } from "@/server/services/guardianService";
+import {
+  getActiveChildrenForGuardian,
+  getAllRelationshipsForGuardian,
+} from "@/server/services/guardianService";
 import {
   getStudentAttendance,
   getStudentReleasedGrades,
   getStudentSessions,
 } from "@/server/services/studentService";
 import { ParentChildSelector } from "@/components/forms/ParentChildSelector";
+import { LinkStudentForm } from "@/components/forms/LinkStudentForm";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,7 +35,10 @@ interface Props {
 
 export default async function ParentDashboardPage({ searchParams }: Props) {
   const auth = await requireRole(["parent", "admin"]);
-  const relationships = await getActiveChildrenForGuardian(auth.userId);
+  const [relationships, allRelationships] = await Promise.all([
+    getActiveChildrenForGuardian(auth.userId),
+    getAllRelationshipsForGuardian(auth.userId),
+  ]);
 
   const resolvedParams = await searchParams;
   const requestedChildId = typeof resolvedParams.childId === "string" ? resolvedParams.childId : undefined;
@@ -43,24 +50,57 @@ export default async function ParentDashboardPage({ searchParams }: Props) {
 
   if (!activeRel) {
     return (
-      <div className="max-w-xl mx-auto rounded-2xl border border-[#DCE4EE] bg-white p-8 shadow-sm text-center space-y-4 my-12">
-        <div className="mx-auto h-12 w-12 rounded-full bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center">
-          <ShieldAlert className="h-6 w-6" />
+      <div className="max-w-2xl mx-auto space-y-8 py-6">
+        <div className="rounded-2xl border border-[#DCE4EE] bg-white p-8 shadow-sm text-center space-y-4">
+          <div className="mx-auto h-12 w-12 rounded-full bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center">
+            <ShieldAlert className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold text-[#142541]">
+            No Verified Student Links Active
+          </h2>
+          <p className="text-xs text-[#5F6F84] leading-relaxed max-w-md mx-auto">
+            In accordance with Syntaxora security policies, parent accounts possess no automatic access to student records. Please connect your child using their unique student code below, or contact academy admissions.
+          </p>
         </div>
-        <h2 className="text-xl font-bold text-[#142541]">
-          No Verified Student Links Active
-        </h2>
-        <p className="text-xs text-[#5F6F84] leading-relaxed max-w-md mx-auto">
-          In accordance with Syntaxora security policies, parent accounts possess no automatic access to student records without an explicit, cryptographically verified invitation link.
-        </p>
-        <div className="pt-2">
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#142541] text-white text-xs font-semibold hover:bg-[#1f3760] transition-colors"
-          >
-            Contact Academy Admissions
-          </Link>
-        </div>
+
+        {/* Link Student Form */}
+        <LinkStudentForm />
+
+        {/* Existing / Pending Link Requests */}
+        {allRelationships.length > 0 && (
+          <div className="rounded-2xl border border-[#DCE4EE] bg-white p-6 shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-[#142541]">
+              Your Connection Requests ({allRelationships.length})
+            </h3>
+            <div className="divide-y divide-[#DCE4EE]">
+              {allRelationships.map((rel) => (
+                <div key={rel.id} className="py-3 flex items-center justify-between text-xs">
+                  <div>
+                    <div className="font-semibold text-[#142541]">
+                      {rel.student?.profile?.full_name || "Enrolled Student"}
+                    </div>
+                    <div className="text-[11px] text-[#5F6F84] font-mono">
+                      Code: {rel.student?.student_code || "STU-PENDING"} • Requested {new Date(rel.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <Badge
+                    variant={
+                      rel.status === "active"
+                        ? "success"
+                        : rel.status === "rejected"
+                        ? "error"
+                        : rel.status === "pending"
+                        ? "warning"
+                        : "outline"
+                    }
+                  >
+                    {rel.status.toUpperCase()}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -286,6 +326,56 @@ export default async function ParentDashboardPage({ searchParams }: Props) {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Connect Additional Student & Link Requests */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+        <LinkStudentForm />
+
+        <div className="rounded-2xl border border-[#DCE4EE] bg-white p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-[#142541]">
+              Family Links & Requests ({allRelationships.length})
+            </h3>
+            <span className="text-[11px] text-[#5F6F84]">Authoritative RLS Boundaries</span>
+          </div>
+
+          <div className="divide-y divide-[#DCE4EE]">
+            {allRelationships.map((rel) => (
+              <div key={rel.id} className="py-3 flex items-center justify-between text-xs">
+                <div className="space-y-0.5">
+                  <div className="font-semibold text-[#142541]">
+                    {rel.student?.profile?.full_name || "Enrolled Student"}
+                  </div>
+                  <div className="text-[11px] text-[#5F6F84] font-mono">
+                    Code: <span className="text-[#3869AD] font-bold">{rel.student?.student_code || "STU-CODE"}</span>
+                  </div>
+                  <div className="text-[10px] text-[#5F6F84]">
+                    Type: <span className="capitalize">{rel.relationship_type.replace("_", " ")}</span> • Method: {rel.verification_method || "Pending"}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge
+                    variant={
+                      rel.status === "active"
+                        ? "success"
+                        : rel.status === "rejected"
+                        ? "error"
+                        : rel.status === "pending"
+                        ? "warning"
+                        : "outline"
+                    }
+                  >
+                    {rel.status.toUpperCase()}
+                  </Badge>
+                  {rel.status === "active" && (
+                    <span className="text-[10px] text-[#168B83] font-semibold">Active Monitoring</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

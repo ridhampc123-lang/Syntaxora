@@ -314,40 +314,59 @@ CREATE INDEX idx_audit_logs_entity ON public.audit_logs(entity_type, entity_id);
 
 -- 15. New User Auth Trigger
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
 DECLARE
-    assigned_role user_role := 'student';
+    assigned_role public.user_role := 'student';
     input_role TEXT;
+    stu_code TEXT;
 BEGIN
-    input_role := (new.raw_user_meta_data->>'role');
+    IF new.raw_user_meta_data IS NOT NULL THEN
+        input_role := (new.raw_user_meta_data->>'role');
+    END IF;
+
     -- Only permit self-selection of student or parent
     IF input_role = 'parent' THEN
-        assigned_role := 'parent';
+        assigned_role := 'parent'::public.user_role;
     ELSE
-        assigned_role := 'student';
+        assigned_role := 'student'::public.user_role;
     END IF;
 
     INSERT INTO public.profiles (id, role, full_name, email)
     VALUES (
         new.id,
         assigned_role,
-        COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+        COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1), 'User'),
         new.email
-    );
+    )
+    ON CONFLICT (id) DO UPDATE
+    SET
+        full_name = EXCLUDED.full_name,
+        role = EXCLUDED.role,
+        updated_at = now();
 
     -- If registering as a student, create an attached canonical student record
     IF assigned_role = 'student' THEN
+        stu_code := 'STU-' || UPPER(SUBSTRING(gen_random_uuid()::TEXT, 1, 8));
         INSERT INTO public.students (profile_id, student_code, status)
         VALUES (
             new.id,
-            'STU-' || UPPER(SUBSTRING(gen_random_uuid()::TEXT, 1, 8)),
+            stu_code,
             'active'
-        );
+        )
+        ON CONFLICT (profile_id) DO NOTHING;
     END IF;
 
     RETURN new;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'Error in handle_new_user trigger: %', SQLERRM;
+        RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
@@ -399,6 +418,11 @@ CREATE POLICY "Users can update own non-role fields"
     USING (auth.uid() = id)
     WITH CHECK (auth.uid() = id);
 
+CREATE POLICY "Users can insert own profile"
+    ON public.profiles FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = id);
+
 -- STUDENTS
 CREATE POLICY "Admins have full access to students"
     ON public.students FOR ALL
@@ -409,6 +433,11 @@ CREATE POLICY "Students can view own student record"
     ON public.students FOR SELECT
     TO authenticated
     USING (profile_id = auth.uid());
+
+CREATE POLICY "Students can insert own student record"
+    ON public.students FOR INSERT
+    TO authenticated
+    WITH CHECK (profile_id = auth.uid());
 
 CREATE POLICY "Instructors can view assigned students"
     ON public.students FOR SELECT

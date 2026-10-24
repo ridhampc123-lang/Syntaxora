@@ -140,20 +140,81 @@ export interface GuardianInvitation {
   created_at: string;
   student?: Student;
 }
+export type BatchStatus = "draft" | "upcoming" | "active" | "paused" | "completed" | "cancelled";
+
+export interface Batch {
+  id: string;
+  course_id: string;
+  name: string;
+  batch_code: string;
+  primary_instructor_profile_id: string;
+  capacity: number;
+  start_at: string;
+  end_at: string;
+  timezone: string;
+  status: BatchStatus;
+  waitlist_enabled?: boolean;
+  waitlist_capacity?: number;
+  created_at: string;
+  updated_at: string;
+  course?: Course;
+  primary_instructor?: Profile;
+  enrolled_count?: number;
+}
+
+export interface BatchScheduleTemplate {
+  id: string;
+  batch_id: string;
+  weekday: number; // 0=Sun, 1=Mon, ..., 6=Sat
+  start_time_local: string; // HH:MM:SS
+  end_time_local: string; // HH:MM:SS
+  timezone: string;
+  effective_start_date: string;
+  effective_end_date: string;
+  instructor_profile_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Enrollment {
+  id: string;
+  student_id: string;
+  course_id: string;
+  batch_id?: string | null;
+  status: EnrollmentStatus;
+  admission_source?: string;
+  payment_status?: string;
+  starts_at?: string;
+  ends_at?: string | null;
+  created_at: string;
+  updated_at?: string;
+  previous_batch_id?: string | null;
+  transfer_reason?: string | null;
+  student?: Student;
+  course?: Course;
+  batch?: Batch;
+}
+
 export interface ClassSession {
   id: string;
   course_id: string;
+  batch_id?: string | null;
   instructor_profile_id: string;
   title: string;
   description?: string | null;
   starts_at: string;
   ends_at: string;
+  timezone?: string;
   meeting_provider: string;
   meeting_url?: string | null;
+  provider_meeting_id?: string | null;
   status: SessionStatus;
+  started_at?: string | null;
+  ended_at?: string | null;
   created_at: string;
   updated_at: string;
   course?: Course;
+  batch?: Batch;
   instructor?: Profile;
 }
 
@@ -205,3 +266,38 @@ export interface LearningProgress {
   lesson_id: string;
   completed_at: string;
 }
+
+export type ApplicationStatus =
+  | "pending"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "needs_information";
+
+export interface StudentApplication {
+  id: string;
+  application_reference: string;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  date_of_birth?: string | null;
+  age?: number | null;
+  course_id?: string | null;
+  course_title?: string | null;
+  education_level?: string | null;
+  guardian_name?: string | null;
+  guardian_email?: string | null;
+  guardian_phone?: string | null;
+  statement_of_interest?: string | null;
+  status: ApplicationStatus;
+  admin_notes?: string | null;
+  decision_reason?: string | null;
+  reviewed_by_profile_id?: string | null;
+  reviewed_at?: string | null;
+  provisioned_student_id?: string | null;
+  provisioned_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  course?: Course | null;
+}
+

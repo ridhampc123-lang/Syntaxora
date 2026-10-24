@@ -14,6 +14,7 @@ import {
   revokeGuardianRelationship,
 } from "@/server/services/guardianService";
 import { createClient } from "@/lib/supabase/server";
+import { GuardianRelationshipType } from "@/types";
 
 export async function createGuardianInvitationAction(formData: FormData) {
   try {
@@ -203,3 +204,213 @@ export async function updateGuardianPermissionsAction(formData: FormData) {
     return { success: false, error: msg };
   }
 }
+
+export interface GuardianActionResult {
+  success: boolean;
+  message: string;
+  errors?: Record<string, string[]>;
+  status?: string;
+}
+
+export async function requestStudentLinkAction(
+  prevState: GuardianActionResult | null,
+  formData: FormData
+): Promise<GuardianActionResult> {
+  try {
+    const user = await requireUser();
+    if (user.profile.role !== "parent" && user.profile.role !== "admin") {
+      return {
+        success: false,
+        message: "Only registered parent accounts can submit student connection requests.",
+      };
+    }
+
+    const rawInput = {
+      studentCode: formData.get("studentCode")?.toString() || "",
+      relationshipType: formData.get("relationshipType")?.toString() || "parent",
+    };
+
+    const { requestStudentLinkSchema } = await import("@/lib/validation/guardian");
+    const parsed = requestStudentLinkSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      const errors: Record<string, string[]> = {};
+      for (const issue of parsed.error.issues) {
+        const path = issue.path[0]?.toString() || "form";
+        if (!errors[path]) errors[path] = [];
+        errors[path].push(issue.message);
+      }
+      return { success: false, message: "Please check the entered student code.", errors };
+    }
+
+    const { requestStudentLinkByCode } = await import("@/server/services/guardianService");
+    const result = await requestStudentLinkByCode(
+      user.userId,
+      user.email,
+      parsed.data.studentCode,
+      parsed.data.relationshipType as GuardianRelationshipType
+    );
+
+    if (result.success) {
+      revalidatePath("/parent");
+      revalidatePath("/admin/guardians");
+    }
+
+    return {
+      success: result.success,
+      message: result.message,
+      status: result.status,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "An error occurred submitting the link request.";
+    return { success: false, message: msg };
+  }
+}
+
+export async function adminApproveRelationshipAction(
+  prevState: GuardianActionResult | null,
+  formData: FormData
+): Promise<GuardianActionResult> {
+  try {
+    const admin = await requireRole(["admin"]);
+
+    const rawInput = {
+      relationshipId: formData.get("relationshipId")?.toString() || "",
+      canViewAttendance: formData.get("canViewAttendance") === "true",
+      canViewProgress: formData.get("canViewProgress") === "true",
+      canViewSchedule: formData.get("canViewSchedule") === "true",
+      canViewFees: formData.get("canViewFees") === "true",
+      canReceiveNotifications: formData.get("canReceiveNotifications") === "true",
+      verificationMethod: formData.get("verificationMethod")?.toString() || "admin_verified_code_request",
+    };
+
+    const { adminApproveRelationshipSchema } = await import("@/lib/validation/guardian");
+    const parsed = adminApproveRelationshipSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.issues[0]?.message || "Invalid approval payload." };
+    }
+
+    const { adminApproveGuardianRelationship } = await import("@/server/services/guardianService");
+    const result = await adminApproveGuardianRelationship(
+      parsed.data.relationshipId,
+      admin.userId,
+      {
+        canViewAttendance: parsed.data.canViewAttendance,
+        canViewProgress: parsed.data.canViewProgress,
+        canViewSchedule: parsed.data.canViewSchedule,
+        canViewFees: parsed.data.canViewFees,
+        canReceiveNotifications: parsed.data.canReceiveNotifications,
+      },
+      parsed.data.verificationMethod
+    );
+
+    if (result.success) {
+      revalidatePath("/admin/guardians");
+      revalidatePath("/parent");
+    }
+
+    return {
+      success: result.success,
+      message: result.message,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to approve guardian relationship";
+    return { success: false, message: msg };
+  }
+}
+
+export async function adminRejectRelationshipAction(
+  prevState: GuardianActionResult | null,
+  formData: FormData
+): Promise<GuardianActionResult> {
+  try {
+    const admin = await requireRole(["admin"]);
+
+    const rawInput = {
+      relationshipId: formData.get("relationshipId")?.toString() || "",
+      rejectionReason: formData.get("rejectionReason")?.toString() || "",
+    };
+
+    const { adminRejectRelationshipSchema } = await import("@/lib/validation/guardian");
+    const parsed = adminRejectRelationshipSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.issues[0]?.message || "Rejection reason required." };
+    }
+
+    const { adminRejectGuardianRelationship } = await import("@/server/services/guardianService");
+    const result = await adminRejectGuardianRelationship(
+      parsed.data.relationshipId,
+      admin.userId,
+      parsed.data.rejectionReason
+    );
+
+    if (result.success) {
+      revalidatePath("/admin/guardians");
+      revalidatePath("/parent");
+    }
+
+    return {
+      success: result.success,
+      message: result.message,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to reject relationship";
+    return { success: false, message: msg };
+  }
+}
+
+export async function adminDirectConnectAction(
+  prevState: GuardianActionResult | null,
+  formData: FormData
+): Promise<GuardianActionResult> {
+  try {
+    const admin = await requireRole(["admin"]);
+
+    const rawInput = {
+      guardianEmail: formData.get("guardianEmail")?.toString() || "",
+      studentCode: formData.get("studentCode")?.toString() || "",
+      relationshipType: formData.get("relationshipType")?.toString() || "parent",
+      canViewAttendance: formData.get("canViewAttendance") === "true",
+      canViewProgress: formData.get("canViewProgress") === "true",
+      canViewSchedule: formData.get("canViewSchedule") === "true",
+      canViewFees: formData.get("canViewFees") === "true",
+      canReceiveNotifications: formData.get("canReceiveNotifications") === "true",
+      verificationMethod: formData.get("verificationMethod")?.toString() || "admin_assisted_connection",
+    };
+
+    const { adminDirectConnectSchema } = await import("@/lib/validation/guardian");
+    const parsed = adminDirectConnectSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.issues[0]?.message || "Invalid connection details." };
+    }
+
+    const { adminCreateDirectGuardianRelationship } = await import("@/server/services/guardianService");
+    const result = await adminCreateDirectGuardianRelationship(
+      parsed.data.guardianEmail,
+      parsed.data.studentCode,
+      parsed.data.relationshipType as GuardianRelationshipType,
+      {
+        canViewAttendance: parsed.data.canViewAttendance,
+        canViewProgress: parsed.data.canViewProgress,
+        canViewSchedule: parsed.data.canViewSchedule,
+        canViewFees: parsed.data.canViewFees,
+        canReceiveNotifications: parsed.data.canReceiveNotifications,
+      },
+      admin.userId,
+      parsed.data.verificationMethod
+    );
+
+    if (result.success) {
+      revalidatePath("/admin/guardians");
+      revalidatePath("/parent");
+    }
+
+    return {
+      success: result.success,
+      message: result.message,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to connect parent and student";
+    return { success: false, message: msg };
+  }
+}
+

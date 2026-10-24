@@ -273,6 +273,38 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
   }
 }
 
+export async function getCourseById(id: string): Promise<Course | null> {
+  if (!isSupabaseConfigured()) {
+    const match = INITIAL_ACADEMY_COURSES.find((c) => c.id === id);
+    return match || null;
+  }
+
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("courses")
+      .select(`
+        *,
+        modules:course_modules(
+          *,
+          lessons(*)
+        )
+      `)
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error || !data) {
+      const match = INITIAL_ACADEMY_COURSES.find((c) => c.id === id);
+      return match || null;
+    }
+
+    return data as Course;
+  } catch {
+    const match = INITIAL_ACADEMY_COURSES.find((c) => c.id === id);
+    return match || null;
+  }
+}
+
 function filterLocalCourses(courses: Course[], filters?: CourseFilterOptions): Course[] {
   let result = courses.filter((c) => c.status === "published");
 

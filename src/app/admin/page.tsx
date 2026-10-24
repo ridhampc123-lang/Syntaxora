@@ -7,7 +7,7 @@ import {
   ShieldCheck,
   Mail,
   ArrowRight,
-  PlusCircle,
+  ClipboardList,
 } from "lucide-react";
 import { getAdminOverviewMetrics, getAdminAuditLogs } from "@/server/services/adminService";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -35,14 +35,20 @@ export default async function AdminOverviewPage() {
             Academy Control Center
           </h2>
           <p className="text-xs text-[#5F6F84] mt-0.5">
-            Real-time aggregate data, course management, and permission controls.
+            Real-time aggregate data, admissions review, and permission controls.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/admin/students">
+          <Link href="/admin/applications">
             <Button variant="primary" size="sm">
-              <PlusCircle className="h-4 w-4 mr-1.5" />
+              <ClipboardList className="h-4 w-4 mr-1.5" />
+              Review Applications
+            </Button>
+          </Link>
+          <Link href="/admin/students">
+            <Button variant="outline" size="sm">
+              <GraduationCap className="h-4 w-4 mr-1.5" />
               Manage Students
             </Button>
           </Link>
@@ -55,8 +61,25 @@ export default async function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* 5 Real Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* 6 Real Metrics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+        <Link href="/admin/applications" className="block transition-transform hover:-translate-y-0.5">
+          <Card className="border-[#3869AD]/30 bg-[#E8EFF8]/40 hover:border-[#3869AD] transition-colors">
+            <CardHeader className="p-4 pb-2 space-y-1">
+              <div className="flex items-center justify-between text-xs font-semibold uppercase text-[#3869AD]">
+                <span>Applications</span>
+                <ClipboardList className="h-4 w-4 text-[#3869AD]" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-[#142541]">
+                {metrics.pendingApplications}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-[11px] text-[#3869AD] font-medium">
+              Pending Admissions Review
+            </CardContent>
+          </Card>
+        </Link>
+
         <Card className="border-[#DCE4EE] bg-white">
           <CardHeader className="p-4 pb-2 space-y-1">
             <div className="flex items-center justify-between text-xs font-semibold uppercase text-[#5F6F84]">
@@ -128,7 +151,7 @@ export default async function AdminOverviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0 text-[11px] text-[#5F6F84]">
-            Pending Admissions Follow-up
+            Admissions Enquiries
           </CardContent>
         </Card>
       </div>

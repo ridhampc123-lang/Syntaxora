@@ -7,7 +7,14 @@ export const metadata = {
   description: "Sign in to access your student, parent, instructor, or admin portal.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ redirect?: string }>;
+}) {
+  const resolvedParams = searchParams ? await searchParams : undefined;
+  const redirectUrl = resolvedParams?.redirect;
+
   return (
     <div className="space-y-6">
       <div className="space-y-1 text-center sm:text-left">
@@ -17,13 +24,21 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <LoginForm />
+      <LoginForm redirectUrl={redirectUrl} />
 
-      <div className="text-center text-xs text-[#5F6F84] pt-2 border-t border-[#DCE4EE]">
-        Don&apos;t have an account yet?{" "}
-        <Link href="/sign-up" className="font-semibold text-[#3869AD] hover:underline">
-          Register here
-        </Link>
+      <div className="pt-3 border-t border-[#DCE4EE] text-center space-y-2 text-xs text-[#5F6F84]">
+        <div>
+          Parent or Guardian?{" "}
+          <Link href="/sign-up?role=parent" className="font-semibold text-[#168B83] hover:underline">
+            Register Parent Account
+          </Link>
+        </div>
+        <div>
+          Prospective Student?{" "}
+          <Link href="/apply" className="font-semibold text-[#3869AD] hover:underline">
+            Apply for Admission
+          </Link>
+        </div>
       </div>
     </div>
   );

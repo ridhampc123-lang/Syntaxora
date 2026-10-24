@@ -10,8 +10,8 @@ import {
   LearningProgress,
 } from "@/types";
 import { INITIAL_ACADEMY_COURSES } from "./courseService";
+import { INITIAL_STUDENTS } from "./adminService";
 import {
-  IN_MEMORY_SESSIONS,
   IN_MEMORY_ASSIGNMENTS,
   IN_MEMORY_SUBMISSIONS,
   IN_MEMORY_ATTENDANCE,
@@ -50,26 +50,13 @@ export const IN_MEMORY_PROGRESS: LearningProgress[] = [
  */
 export async function getStudentByProfileId(profileId: string): Promise<Student | null> {
   if (!isSupabaseConfigured()) {
-    // In dev / test, Liam O'Connor is the primary sample student
-    return {
-      id: "s1000000-0000-0000-0000-000000000001",
-      profile_id: profileId,
-      student_code: "STU-8F39A1C2",
-      date_of_birth: "2010-04-12",
-      emergency_contact_phone: "+1 (555) 234-5678",
-      status: "active",
-      notes: "Enrolled in Teens Robotics Track",
-      created_at: "2026-09-01T00:00:00Z",
-      updated_at: "2026-09-01T00:00:00Z",
-      profile: {
-        id: profileId,
-        role: "student",
-        full_name: "Liam O'Connor",
-        email: "liam.oconnor@example.com",
-        created_at: "2026-09-01T00:00:00Z",
-        updated_at: "2026-09-01T00:00:00Z",
-      },
-    };
+    const found = INITIAL_STUDENTS.find(
+      (s) => s.profile_id === profileId || s.profile?.id === profileId
+    );
+    if (found) return found;
+    if (profileId === "u1000000-0000-0000-0000-000000000001") return INITIAL_STUDENTS[0];
+    if (profileId === "u1000000-0000-0000-0000-000000000002") return INITIAL_STUDENTS[1];
+    return null;
   }
 
   try {
@@ -116,29 +103,42 @@ export async function getStudentCourses(_studentId: string): Promise<Course[]> {
   }
 }
 
+import { getEnrollments } from "./enrollmentService";
+import { getAllSessions } from "./scheduleService";
+import { Enrollment } from "@/types";
+
 /**
- * Returns class sessions for a student's enrolled courses.
+ * Returns active enrollments for a student, including assigned batches.
+ */
+export async function getStudentEnrollments(studentId: string): Promise<Enrollment[]> {
+  return getEnrollments({ studentId, status: "active" });
+}
+
+/**
+ * Returns class sessions strictly scoped to the student's enrolled courses and assigned cohort batches.
+ * Students cannot see sessions belonging to another batch of the same course.
  */
 export async function getStudentSessions(studentId?: string): Promise<ClassSession[]> {
-  if (!isSupabaseConfigured()) {
-    return studentId ? IN_MEMORY_SESSIONS : IN_MEMORY_SESSIONS;
+  if (!studentId) return [];
+
+  const enrollments = await getEnrollments({ studentId, status: "active" });
+  if (enrollments.length === 0) {
+    return [];
   }
 
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("class_sessions")
-      .select("*, course:courses (*)")
-      .order("starts_at", { ascending: true });
+  const courseIds = new Set(enrollments.map((e) => e.course_id));
+  const batchIds = new Set(enrollments.map((e) => e.batch_id).filter(Boolean) as string[]);
 
-    if (error || !data) {
-      return IN_MEMORY_SESSIONS;
+  const allSessions = await getAllSessions();
+  return allSessions.filter((s) => {
+    if (!courseIds.has(s.course_id)) return false;
+    // If session is batch-specific, student must belong to that exact batch
+    if (s.batch_id) {
+      return batchIds.has(s.batch_id);
     }
-
-    return data as unknown as ClassSession[];
-  } catch {
-    return IN_MEMORY_SESSIONS;
-  }
+    // If student has course but has not been assigned a batch yet, do not show batch sessions
+    return batchIds.size > 0;
+  });
 }
 
 /**

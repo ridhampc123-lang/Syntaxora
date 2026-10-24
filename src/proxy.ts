@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -37,9 +37,19 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // CRITICAL: Do NOT redirect Server Actions or non-GET requests from proxy.
+  // Server Actions make POST requests expecting text/x-component RSC streaming data.
+  // If proxy redirects a Server Action (e.g. returning 307 to a dashboard or login),
+  // the client-side router follows the redirect to an HTML page and crashes with:
+  // "An unexpected response was received from the server."
+  const isServerAction = request.headers.has("next-action");
+  if (isServerAction || request.method !== "GET") {
+    return response;
+  }
+
   const pathname = request.nextUrl.pathname;
 
-  // Protect Portal Routes
+  // Protect Portal Routes for GET navigations
   const isProtectedPath =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/instructor") ||
@@ -50,7 +60,11 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
+      const redirectResponse = NextResponse.redirect(loginUrl);
+      response.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+      return redirectResponse;
     }
   }
 
@@ -62,7 +76,11 @@ export async function middleware(request: NextRequest) {
     else if (role === "instructor") destination = "/instructor";
     else if (role === "parent") destination = "/parent";
 
-    return NextResponse.redirect(new URL(destination, request.url));
+    const redirectResponse = NextResponse.redirect(new URL(destination, request.url));
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
   }
 
   return response;

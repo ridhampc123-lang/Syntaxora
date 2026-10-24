@@ -1,12 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { ExternalLink, CheckSquare } from "lucide-react";
+import { CheckSquare } from "lucide-react";
 import { requireRole } from "@/server/services/authService";
 import {
   getInstructorAssignedCourses,
   getInstructorSessions,
 } from "@/server/services/instructorService";
 import { CreateSessionModal } from "@/components/forms/CreateSessionModal";
+import { StartLiveClassButton } from "@/components/forms/StartLiveClassButton";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata = {
@@ -92,17 +93,11 @@ export default async function InstructorSessionsPage() {
                       <CheckSquare className="h-3.5 w-3.5" />
                       Roster
                     </Link>
-                    {session.meeting_url && (
-                      <a
-                        href={session.meeting_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#168B83] hover:underline"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Launch
-                      </a>
-                    )}
+                    <StartLiveClassButton
+                      sessionId={session.id}
+                      status={session.status}
+                      meetingUrl={session.meeting_url}
+                    />
                   </td>
                 </tr>
               ))}

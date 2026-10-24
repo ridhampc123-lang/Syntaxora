@@ -22,6 +22,41 @@ export default async function StudentLayout({
   const auth = await requireRole(["student", "admin"]);
   const student = await getStudentByProfileId(auth.userId);
 
+  // STRICT SECURITY INVARIANT: Deny student-portal access if unverified, inactive, suspended, or not linked
+  if (auth.profile.role === "student" && (!student || student.status !== "active")) {
+    return (
+      <div className="min-h-screen bg-[#F3F6FA] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-[#DCE4EE] p-8 text-center space-y-4">
+          <div className="h-12 w-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+            <span className="text-xl font-bold">!</span>
+          </div>
+          <h2 className="text-xl font-extrabold text-[#142541]">Student Account Restricted</h2>
+          <p className="text-xs text-[#5F6F84] leading-relaxed">
+            {student
+              ? `Your student enrollment is currently marked as "${student.status}". Access to the learning portal is restricted.`
+              : "No active student record is associated with your account. Student accounts require an approved application and administrative provisioning."}
+          </p>
+          <div className="pt-4 border-t border-[#DCE4EE] flex justify-center gap-3">
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-lg bg-[#F3F6FA] text-xs font-semibold text-[#5F6F84] hover:bg-[#DCE4EE] transition-colors cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </form>
+            <Link
+              href="/apply"
+              className="px-4 py-2 rounded-lg bg-[#3869AD] text-xs font-semibold text-white hover:bg-[#2D558C] transition-colors"
+            >
+              Admissions Portal
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const navLinks = [
     { href: "/student", label: "Dashboard", icon: LayoutDashboard },
     { href: "/student/courses", label: "Enrolled Tracks", icon: BookOpen },

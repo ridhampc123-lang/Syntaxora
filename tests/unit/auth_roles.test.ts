@@ -33,16 +33,21 @@ describe("Authentication & Role Authorization Security", () => {
     }
   });
 
-  it("permits registration for student role with compliant password", () => {
-    const validStudentPayload = {
+  it("rejects direct registration for student role requiring admission application", () => {
+    const studentPayload = {
       fullName: "Alex Student",
       email: "alex@example.com",
       password: "ValidPassword1",
       role: "student",
     };
 
-    const result = signUpSchema.safeParse(validStudentPayload);
-    expect(result.success).toBe(true);
+    const result = signUpSchema.safeParse(studentPayload);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain(
+        "Student self-registration is disabled. Prospective students must submit an admission application at /apply."
+      );
+    }
   });
 
   it("permits registration for parent role with compliant password", () => {

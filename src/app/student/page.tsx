@@ -6,7 +6,6 @@ import {
   ClipboardList,
   Award,
   ArrowRight,
-  ExternalLink,
 } from "lucide-react";
 import { requireRole } from "@/server/services/authService";
 import {
@@ -15,9 +14,13 @@ import {
   getStudentSessions,
   getStudentAssignments,
   getStudentReleasedGrades,
+  getStudentEnrollments,
 } from "@/server/services/studentService";
+import { StudentJoinButton } from "@/components/dashboards/StudentJoinButton";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+import { StudentCodeBadge } from "@/components/dashboards/StudentCodeBadge";
 
 export const metadata = {
   title: "Student Dashboard — Syntaxora",
@@ -36,26 +39,33 @@ export default async function StudentDashboardPage() {
     );
   }
 
-  const [courses, sessions, assignments, grades] = await Promise.all([
+  const [courses, sessions, assignments, grades, enrollments] = await Promise.all([
     getStudentCourses(student.id),
     getStudentSessions(student.id),
     getStudentAssignments(student.id),
     getStudentReleasedGrades(student.id),
+    getStudentEnrollments(student.id),
   ]);
 
   const upcomingSession = sessions[0];
   const pendingAssignments = assignments.filter((a) => !a.submission);
+  const awaitingBatch = enrollments.filter((e) => !e.batch_id);
 
   return (
     <div className="space-y-8">
-      {/* Title */}
-      <div>
-        <h2 className="text-2xl font-extrabold text-[#142541] tracking-tight">
-          Welcome back, {auth.profile.full_name}
-        </h2>
-        <p className="text-xs text-[#5F6F84] mt-0.5">
-          Student ID: <span className="font-mono text-[#3869AD] font-bold">{student.student_code}</span> — Your applied artificial intelligence workspace.
-        </p>
+      {/* Title & Student Code Profile Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs">
+        <div>
+          <h2 className="text-2xl font-extrabold text-[#142541] tracking-tight">
+            Welcome back, {auth.profile.full_name}
+          </h2>
+          <p className="text-xs text-[#5F6F84] mt-0.5">
+            Your applied artificial intelligence workspace and verified curriculum portal.
+          </p>
+        </div>
+        <div>
+          <StudentCodeBadge studentCode={student.student_code} />
+        </div>
       </div>
 
       {/* Metrics Row */}
@@ -113,6 +123,18 @@ export default async function StudentDashboardPage() {
         </Card>
       </div>
 
+      {/* Awaiting Batch Assignment Notice */}
+      {awaitingBatch.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-1">
+          <div className="text-xs font-bold text-amber-900">
+            Awaiting Batch Assignment
+          </div>
+          <p className="text-[11px] text-amber-800">
+            You are enrolled in <strong>{awaitingBatch.map((e) => e.course?.title).join(", ")}</strong>. Admissions is currently confirming your cohort timetable. Live classes will appear here once your batch is active.
+          </p>
+        </div>
+      )}
+
       {/* Next Class Hero Banner */}
       {upcomingSession && (
         <div className="rounded-2xl border border-[#3869AD]/30 bg-gradient-to-br from-[#142541] to-[#1f3760] text-white p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -129,20 +151,13 @@ export default async function StudentDashboardPage() {
               Time: <strong>{new Date(upcomingSession.starts_at).toLocaleString()}</strong>
             </div>
           </div>
-          <div className="shrink-0">
-            {upcomingSession.meeting_url ? (
-              <a
-                href={upcomingSession.meeting_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#168B83] hover:bg-[#126f69] text-white font-bold text-xs shadow-lg transition-all"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Join Live Classroom
-              </a>
-            ) : (
-              <span className="text-xs text-[#DCE4EE]/60">Link active at session start</span>
-            )}
+          <div className="shrink-0 bg-white/10 p-3 rounded-xl border border-white/10">
+            <StudentJoinButton
+              sessionId={upcomingSession.id}
+              sessionStatus={upcomingSession.status}
+              startsAt={upcomingSession.starts_at}
+              endsAt={upcomingSession.ends_at}
+            />
           </div>
         </div>
       )}

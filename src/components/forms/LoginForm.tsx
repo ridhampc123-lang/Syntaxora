@@ -13,19 +13,19 @@ const initialState: AuthActionResult = {
   message: "",
 };
 
-export function LoginForm() {
+export function LoginForm({ redirectUrl }: { redirectUrl?: string }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(signInAction, initialState);
 
   useEffect(() => {
     if (state.success && state.redirectTo) {
-      router.push(state.redirectTo);
-      router.refresh();
+      window.location.href = state.redirectTo;
     }
   }, [state, router]);
 
   return (
     <form action={formAction} className="space-y-4">
+      {redirectUrl && <input type="hidden" name="redirect" value={redirectUrl} />}
       {state.message && (
         <Alert variant={state.success ? "success" : "error"}>
           {state.message}

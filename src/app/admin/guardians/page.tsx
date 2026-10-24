@@ -6,6 +6,8 @@ import {
   IN_MEMORY_INVITATIONS,
 } from "@/server/services/guardianService";
 import { CreateGuardianInvitationModal } from "@/components/forms/CreateGuardianInvitationModal";
+import { CreateDirectRelationshipModal } from "@/components/forms/CreateDirectRelationshipModal";
+import { PendingGuardianRequestsTable } from "@/components/dashboards/PendingGuardianRequestsTable";
 import { RevokeRelationshipModal } from "@/components/forms/RevokeRelationshipModal";
 import { createClient } from "@/lib/supabase/server";
 import { GuardianStudentRelationship, GuardianInvitation } from "@/types";
@@ -38,6 +40,7 @@ async function getAdminRelationships(): Promise<GuardianStudentRelationship[]> {
       student:students (
         id,
         student_code,
+        status,
         profile:profiles (
           full_name,
           email
@@ -89,15 +92,18 @@ async function getAdminPendingInvitations(): Promise<GuardianInvitation[]> {
 }
 
 export default async function AdminGuardiansPage() {
-  const [students, relationships, pendingInvitations] = await Promise.all([
+  const [students, allRelationships, pendingInvitations] = await Promise.all([
     getAdminStudents(),
     getAdminRelationships(),
     getAdminPendingInvitations(),
   ]);
 
+  const pendingRequests = allRelationships.filter((r) => r.status === "pending");
+  const verifiedOrHistorical = allRelationships.filter((r) => r.status !== "pending");
+
   return (
     <div className="space-y-8">
-      {/* Title & Action */}
+      {/* Title & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-extrabold text-[#142541] tracking-tight">
@@ -107,8 +113,14 @@ export default async function AdminGuardiansPage() {
             Explicit, verified guardian relationships. Never matched from names or email similarities.
           </p>
         </div>
-        <CreateGuardianInvitationModal students={students} />
+        <div className="flex items-center gap-2">
+          <CreateDirectRelationshipModal students={students} />
+          <CreateGuardianInvitationModal students={students} />
+        </div>
       </div>
+
+      {/* Pending Parent Link Requests (Submitted via Student Code) */}
+      <PendingGuardianRequestsTable pendingRequests={pendingRequests} />
 
       {/* Pending Invitations */}
       {pendingInvitations.length > 0 && (
@@ -164,7 +176,7 @@ export default async function AdminGuardiansPage() {
       {/* Active Verified Relationships */}
       <div className="rounded-xl border border-[#DCE4EE] bg-white overflow-hidden shadow-sm">
         <div className="p-4 border-b border-[#DCE4EE] bg-[#F3F6FA] text-xs font-semibold text-[#142541] flex items-center justify-between">
-          <span>Active & Historical Guardian Relationships ({relationships.length})</span>
+          <span>Active & Historical Guardian Relationships ({verifiedOrHistorical.length})</span>
           <span className="text-[11px] text-[#5F6F84]">
             Enforced by PostgreSQL Row Level Security (RLS)
           </span>
@@ -183,7 +195,7 @@ export default async function AdminGuardiansPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#DCE4EE] text-[#263449]">
-              {relationships.map((rel) => {
+              {verifiedOrHistorical.map((rel) => {
                 const guardianName = rel.guardian?.full_name || "Authorized Guardian";
                 const guardianEmail = rel.guardian?.email || "—";
                 const studentName = rel.student?.profile?.full_name || "Academy Learner";

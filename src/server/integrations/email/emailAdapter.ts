@@ -98,3 +98,65 @@ export function getGuardianInvitationEmail(studentName: string, invitationUrl: s
     text: `You have been invited to link as guardian for ${studentName}. Click here to accept: ${invitationUrl}. This link expires in 7 days.`,
   };
 }
+
+export function getStudentAdmissionSetupEmail(
+  studentName: string,
+  studentCode: string,
+  setupUrl: string
+): { subject: string; html: string; text: string } {
+  return {
+    subject: `Admission Approved: Set Up Your Syntaxora Student Account (${studentCode})`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #142541;">
+        <h2 style="color: #142541; margin-bottom: 8px;">Welcome to Syntaxora AI Academy</h2>
+        <p style="color: #5F6F84; font-size: 14px; line-height: 1.5;">
+          Congratulations <strong>${studentName}</strong>! Your application for admission has been approved by our academic faculty.
+        </p>
+        <div style="background-color: #F3F6FA; border: 1px solid #DCE4EE; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <div style="font-size: 11px; text-transform: uppercase; color: #5F6F84; font-weight: bold; letter-spacing: 0.05em;">Your Permanent Student Code</div>
+          <div style="font-size: 20px; font-family: monospace; font-weight: bold; color: #3869AD; margin-top: 4px;">${studentCode}</div>
+          <div style="font-size: 11px; color: #5F6F84; margin-top: 4px;">Share this code with your verified parents/guardians to enable portal monitoring.</div>
+        </div>
+        <div style="margin: 24px 0;">
+          <a href="${setupUrl}" style="background-color: #3869AD; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+            Complete Account Setup & Access Portal
+          </a>
+        </div>
+        <p style="color: #5F6F84; font-size: 12px; line-height: 1.4;">
+          This secure setup link is expiring and single-use. If you need any assistance, reach out to admissions@syntaxora.com.
+        </p>
+      </div>
+    `,
+    text: `Congratulations ${studentName}! Your Syntaxora application has been approved. Your Student Code is: ${studentCode}. Click to set up your password: ${setupUrl}`,
+  };
+}
+
+export function getApplicationStatusUpdateEmail(
+  applicantName: string,
+  reference: string,
+  status: string,
+  message: string
+): { subject: string; html: string; text: string } {
+  return {
+    subject: `Admissions Update: Application ${reference} — Syntaxora AI Academy`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #142541;">
+        <h2 style="color: #142541; margin-bottom: 8px;">Admissions Status Update</h2>
+        <p style="color: #5F6F84; font-size: 14px; line-height: 1.5;">
+          Hello <strong>${applicantName}</strong>,
+        </p>
+        <p style="color: #5F6F84; font-size: 14px; line-height: 1.5;">
+          The status of your application <strong>${reference}</strong> is now: <strong>${status.toUpperCase()}</strong>.
+        </p>
+        <div style="background-color: #F3F6FA; border: 1px solid #DCE4EE; padding: 16px; border-radius: 8px; margin: 20px 0; font-size: 13px; color: #263449;">
+          ${message}
+        </div>
+        <p style="color: #5F6F84; font-size: 12px;">
+          Syntaxora Admissions Committee • admissions@syntaxora.com
+        </p>
+      </div>
+    `,
+    text: `Admissions Update for ${applicantName} (${reference}): Your application status is now ${status}. ${message}`,
+  };
+}
+

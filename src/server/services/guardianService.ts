@@ -558,3 +558,592 @@ export async function revokeGuardianRelationship(
     return { success: false, error: msg };
   }
 }
+
+// In-memory rate limiting map for student linking attempts
+const LINK_ATTEMPT_TIMESTAMPS = new Map<string, number[]>();
+
+export function checkLinkRateLimit(guardianProfileId: string): boolean {
+  const now = Date.now();
+  const windowMs = 5 * 60 * 1000; // 5 minutes
+  const maxAttempts = 5;
+
+  const timestamps = LINK_ATTEMPT_TIMESTAMPS.get(guardianProfileId) || [];
+  const validTimestamps = timestamps.filter((t) => now - t < windowMs);
+
+  if (validTimestamps.length >= maxAttempts) {
+    return false;
+  }
+
+  validTimestamps.push(now);
+  LINK_ATTEMPT_TIMESTAMPS.set(guardianProfileId, validTimestamps);
+  return true;
+}
+
+/**
+ * Returns all relationships for a guardian (pending, active, rejected, revoked)
+ */
+export async function getAllRelationshipsForGuardian(
+  guardianProfileId: string
+): Promise<GuardianStudentRelationship[]> {
+  if (!isSupabaseConfigured()) {
+    return IN_MEMORY_RELATIONSHIPS.filter(
+      (r) => r.guardian_profile_id === guardianProfileId
+    );
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("guardian_student_relationships")
+      .select(`
+        id,
+        guardian_profile_id,
+        student_id,
+        relationship_type,
+        status,
+        can_view_attendance,
+        can_view_progress,
+        can_view_schedule,
+        can_view_fees,
+        can_receive_notifications,
+        verification_method,
+        verified_at,
+        created_at,
+        updated_at,
+        student:students (
+          id,
+          student_code,
+          status,
+          date_of_birth,
+          profile:profiles (
+            full_name,
+            email,
+            avatar_url
+          )
+        )
+      `)
+      .eq("guardian_profile_id", guardianProfileId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data) {
+      return IN_MEMORY_RELATIONSHIPS.filter(
+        (r) => r.guardian_profile_id === guardianProfileId
+      );
+    }
+
+    return data as unknown as GuardianStudentRelationship[];
+  } catch {
+    return IN_MEMORY_RELATIONSHIPS.filter(
+      (r) => r.guardian_profile_id === guardianProfileId
+    );
+  }
+}
+
+/**
+ * Submits a student link request using the unique student code.
+ * STRICT SECURITY INVARIANTS:
+ * 1. Rate-limited to prevent brute forcing student codes.
+ * 2. Generic safe error on invalid/inactive codes (never leaks student names).
+ * 3. Enforces unique (guardian, student) pair.
+ * 4. Relationship is created with status 'pending' and ALL viewing permissions FALSE.
+ * 5. Data access is zero until verified by academy administration.
+ */
+export async function requestStudentLinkByCode(
+  guardianProfileId: string,
+  _guardianEmail: string,
+  rawStudentCode: string,
+  relationshipType: GuardianRelationshipType = "parent"
+): Promise<{ success: boolean; message: string; status?: string; relationshipId?: string }> {
+  // 1. Rate limit
+  if (!checkLinkRateLimit(guardianProfileId)) {
+    return {
+      success: false,
+      message: "Too many linking attempts. Please wait 5 minutes before trying another student code.",
+    };
+  }
+
+  const studentCode = rawStudentCode.trim().toUpperCase();
+  const now = new Date().toISOString();
+
+  // 2. Resolve student record
+  let student: { id: string; student_code: string; status: string } | null = null;
+
+  if (!isSupabaseConfigured()) {
+    const { INITIAL_STUDENTS } = await import("./adminService");
+    const found = INITIAL_STUDENTS.find(
+      (s) => s.student_code.toUpperCase() === studentCode
+    );
+    if (found) {
+      student = { id: found.id, student_code: found.student_code, status: found.status };
+    }
+  } else {
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from("students")
+        .select("id, student_code, status")
+        .eq("student_code", studentCode)
+        .maybeSingle();
+
+      if (!error && data) {
+        student = data;
+      }
+    } catch {
+      // Invariant: Return generic error
+    }
+  }
+
+  // Generic safe error
+  if (!student || student.status !== "active") {
+    return {
+      success: false,
+      message: "Invalid student code or student record not found. Please verify the code with your student and try again.",
+    };
+  }
+
+  // 3. Enforce Unique Guardian-Student Pair
+  if (!isSupabaseConfigured()) {
+    const { INITIAL_STUDENTS } = await import("./adminService");
+    const existing = IN_MEMORY_RELATIONSHIPS.find(
+      (r) => r.guardian_profile_id === guardianProfileId && r.student_id === student.id
+    );
+
+    if (existing) {
+      if (existing.status === "active") {
+        return {
+          success: true,
+          status: "active",
+          message: "You are already actively connected to this student.",
+          relationshipId: existing.id,
+        };
+      }
+      if (existing.status === "pending") {
+        return {
+          success: true,
+          status: "pending",
+          message: "A connection request for this student is already pending administrator verification.",
+          relationshipId: existing.id,
+        };
+      }
+      if (existing.status === "rejected") {
+        return {
+          success: false,
+          status: "rejected",
+          message: "A prior connection request for this student was rejected by academy admissions.",
+          relationshipId: existing.id,
+        };
+      }
+      if (existing.status === "revoked") {
+        return {
+          success: false,
+          status: "revoked",
+          message: "Guardian access for this student was previously revoked.",
+          relationshipId: existing.id,
+        };
+      }
+    }
+
+    const newId = `rel-${crypto.randomUUID()}`;
+    const newRel: GuardianStudentRelationship = {
+      id: newId,
+      guardian_profile_id: guardianProfileId,
+      student_id: student.id,
+      relationship_type: relationshipType,
+      status: "pending",
+      can_view_attendance: false,
+      can_view_progress: false,
+      can_view_schedule: false,
+      can_view_fees: false,
+      can_receive_notifications: false,
+      verification_method: "parent_code_request",
+      created_at: now,
+      updated_at: now,
+      student: INITIAL_STUDENTS.find((s) => s.id === student.id),
+    };
+
+    IN_MEMORY_RELATIONSHIPS.unshift(newRel);
+
+    return {
+      success: true,
+      status: "pending",
+      relationshipId: newId,
+      message: "Student connection request submitted. In accordance with academy child safety policies, student records remain private until an academy administrator verifies your relationship.",
+    };
+  }
+
+  try {
+    const supabase = await createClient();
+
+    // Check existing
+    const { data: existing } = await supabase
+      .from("guardian_student_relationships")
+      .select("id, status")
+      .eq("guardian_profile_id", guardianProfileId)
+      .eq("student_id", student.id)
+      .maybeSingle();
+
+    if (existing) {
+      if (existing.status === "active") {
+        return {
+          success: true,
+          status: "active",
+          message: "You are already actively connected to this student.",
+          relationshipId: existing.id,
+        };
+      }
+      if (existing.status === "pending") {
+        return {
+          success: true,
+          status: "pending",
+          message: "A connection request for this student is already pending administrator verification.",
+          relationshipId: existing.id,
+        };
+      }
+      if (existing.status === "rejected") {
+        return {
+          success: false,
+          status: "rejected",
+          message: "A prior connection request for this student was rejected by academy admissions.",
+          relationshipId: existing.id,
+        };
+      }
+      if (existing.status === "revoked") {
+        return {
+          success: false,
+          status: "revoked",
+          message: "Guardian access for this student was previously revoked.",
+          relationshipId: existing.id,
+        };
+      }
+    }
+
+    // Insert pending with NO permissions
+    const { data: newRel, error: insertError } = await supabase
+      .from("guardian_student_relationships")
+      .insert({
+        guardian_profile_id: guardianProfileId,
+        student_id: student.id,
+        relationship_type: relationshipType,
+        status: "pending",
+        can_view_attendance: false,
+        can_view_progress: false,
+        can_view_schedule: false,
+        can_view_fees: false,
+        can_receive_notifications: false,
+        verification_method: "parent_code_request",
+      })
+      .select("id")
+      .single();
+
+    if (insertError || !newRel) {
+      return { success: false, message: "Failed to submit link request. Please try again." };
+    }
+
+    await supabase.from("audit_logs").insert({
+      actor_id: guardianProfileId,
+      action: "GUARDIAN_LINK_REQUESTED",
+      entity_type: "guardian_student_relationship",
+      entity_id: newRel.id,
+      details: {
+        student_id: student.id,
+        student_code: student.student_code,
+        relationship_type: relationshipType,
+      },
+    });
+
+    return {
+      success: true,
+      status: "pending",
+      relationshipId: newRel.id,
+      message: "Student connection request submitted. In accordance with academy child safety policies, student records remain private until an academy administrator verifies your relationship.",
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to submit linking request";
+    return { success: false, message: msg };
+  }
+}
+
+/**
+ * Admin approves and activates a guardian relationship with chosen permission flags.
+ */
+export async function adminApproveGuardianRelationship(
+  relationshipId: string,
+  adminProfileId: string,
+  permissions: {
+    canViewAttendance?: boolean;
+    canViewProgress?: boolean;
+    canViewSchedule?: boolean;
+    canViewFees?: boolean;
+    canReceiveNotifications?: boolean;
+  },
+  verificationMethod = "admin_verified_code_request"
+): Promise<{ success: boolean; message: string }> {
+  const now = new Date().toISOString();
+
+  if (!isSupabaseConfigured()) {
+    const rel = IN_MEMORY_RELATIONSHIPS.find((r) => r.id === relationshipId);
+    if (!rel) return { success: false, message: "Relationship record not found." };
+
+    rel.status = "active";
+    rel.can_view_attendance = Boolean(permissions.canViewAttendance);
+    rel.can_view_progress = Boolean(permissions.canViewProgress);
+    rel.can_view_schedule = Boolean(permissions.canViewSchedule);
+    rel.can_view_fees = Boolean(permissions.canViewFees);
+    rel.can_receive_notifications = Boolean(permissions.canReceiveNotifications);
+    rel.verification_method = verificationMethod;
+    rel.verified_at = now;
+    rel.verified_by_profile_id = adminProfileId;
+    rel.updated_at = now;
+
+    return { success: true, message: "Guardian relationship verified and activated." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("guardian_student_relationships")
+      .update({
+        status: "active",
+        can_view_attendance: Boolean(permissions.canViewAttendance),
+        can_view_progress: Boolean(permissions.canViewProgress),
+        can_view_schedule: Boolean(permissions.canViewSchedule),
+        can_view_fees: Boolean(permissions.canViewFees),
+        can_receive_notifications: Boolean(permissions.canReceiveNotifications),
+        verification_method: verificationMethod,
+        verified_at: now,
+        verified_by_profile_id: adminProfileId,
+        updated_at: now,
+      })
+      .eq("id", relationshipId);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    await supabase.from("audit_logs").insert({
+      actor_id: adminProfileId,
+      action: "GUARDIAN_RELATIONSHIP_APPROVED",
+      entity_type: "guardian_student_relationship",
+      entity_id: relationshipId,
+      details: {
+        permissions,
+        verification_method: verificationMethod,
+      },
+    });
+
+    return { success: true, message: "Guardian relationship verified and activated." };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to activate relationship";
+    return { success: false, message: msg };
+  }
+}
+
+/**
+ * Admin rejects a guardian connection request with recorded reason.
+ */
+export async function adminRejectGuardianRelationship(
+  relationshipId: string,
+  adminProfileId: string,
+  reason: string
+): Promise<{ success: boolean; message: string }> {
+  const now = new Date().toISOString();
+
+  if (!isSupabaseConfigured()) {
+    const rel = IN_MEMORY_RELATIONSHIPS.find((r) => r.id === relationshipId);
+    if (!rel) return { success: false, message: "Relationship record not found." };
+
+    rel.status = "rejected";
+    rel.revocation_reason = reason;
+    rel.updated_at = now;
+    return { success: true, message: "Guardian connection request rejected." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("guardian_student_relationships")
+      .update({
+        status: "rejected",
+        revocation_reason: reason,
+        updated_at: now,
+      })
+      .eq("id", relationshipId);
+
+    if (error) return { success: false, message: error.message };
+
+    await supabase.from("audit_logs").insert({
+      actor_id: adminProfileId,
+      action: "GUARDIAN_RELATIONSHIP_REJECTED",
+      entity_type: "guardian_student_relationship",
+      entity_id: relationshipId,
+      details: { rejection_reason: reason },
+    });
+
+    return { success: true, message: "Guardian connection request rejected." };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to reject relationship";
+    return { success: false, message: msg };
+  }
+}
+
+/**
+ * Admin directly connects an existing verified parent account to a student using their code.
+ */
+export async function adminCreateDirectGuardianRelationship(
+  guardianEmail: string,
+  studentCode: string,
+  relationshipType: GuardianRelationshipType,
+  permissions: {
+    canViewAttendance: boolean;
+    canViewProgress: boolean;
+    canViewSchedule: boolean;
+    canViewFees: boolean;
+    canReceiveNotifications: boolean;
+  },
+  adminProfileId: string,
+  verificationMethod = "admin_assisted_connection"
+): Promise<{ success: boolean; message: string; relationshipId?: string }> {
+  const normEmail = guardianEmail.toLowerCase().trim();
+  const code = studentCode.toUpperCase().trim();
+  const now = new Date().toISOString();
+
+  if (!isSupabaseConfigured()) {
+    const { INITIAL_STUDENTS } = await import("./adminService");
+    const student = INITIAL_STUDENTS.find((s) => s.student_code.toUpperCase() === code);
+    if (!student) {
+      return { success: false, message: `Student code ${code} not found in student records.` };
+    }
+
+    const existing = IN_MEMORY_RELATIONSHIPS.find(
+      (r) => r.student_id === student.id && r.guardian?.email.toLowerCase() === normEmail
+    );
+    if (existing) {
+      existing.status = "active";
+      existing.can_view_attendance = permissions.canViewAttendance;
+      existing.can_view_progress = permissions.canViewProgress;
+      existing.can_view_schedule = permissions.canViewSchedule;
+      existing.can_view_fees = permissions.canViewFees;
+      existing.can_receive_notifications = permissions.canReceiveNotifications;
+      existing.verification_method = verificationMethod;
+      existing.verified_at = now;
+      existing.verified_by_profile_id = adminProfileId;
+      existing.updated_at = now;
+      return { success: true, message: "Existing guardian relationship updated and activated.", relationshipId: existing.id };
+    }
+
+    const relId = `rel-${crypto.randomUUID()}`;
+    const newRel: GuardianStudentRelationship = {
+      id: relId,
+      guardian_profile_id: `u4000000-0000-0000-0000-${crypto.randomBytes(6).toString("hex")}`,
+      student_id: student.id,
+      relationship_type: relationshipType,
+      status: "active",
+      can_view_attendance: permissions.canViewAttendance,
+      can_view_progress: permissions.canViewProgress,
+      can_view_schedule: permissions.canViewSchedule,
+      can_view_fees: permissions.canViewFees,
+      can_receive_notifications: permissions.canReceiveNotifications,
+      verification_method: verificationMethod,
+      verified_at: now,
+      verified_by_profile_id: adminProfileId,
+      created_at: now,
+      updated_at: now,
+      student,
+      guardian: {
+        id: `u4000000-0000-0000-0000-mock`,
+        role: "parent",
+        full_name: normEmail.split("@")[0],
+        email: normEmail,
+        created_at: now,
+        updated_at: now,
+      },
+    };
+
+    IN_MEMORY_RELATIONSHIPS.unshift(newRel);
+    return { success: true, message: `Guardian relationship verified and activated for ${student.student_code}.`, relationshipId: relId };
+  }
+
+  try {
+    const supabase = await createClient();
+
+    const { data: student, error: stuError } = await supabase
+      .from("students")
+      .select("id, student_code")
+      .eq("student_code", code)
+      .maybeSingle();
+
+    if (stuError || !student) {
+      return { success: false, message: `Student code ${code} not found in student records.` };
+    }
+
+    const { data: parentProfile, error: parentError } = await supabase
+      .from("profiles")
+      .select("id, role, email")
+      .eq("email", normEmail)
+      .maybeSingle();
+
+    if (parentError || !parentProfile) {
+      return {
+        success: false,
+        message: `No registered parent account found for email ${normEmail}. Parents must first create a parent account before linking.`,
+      };
+    }
+
+    if (parentProfile.role !== "parent") {
+      return {
+        success: false,
+        message: `Account ${normEmail} has role '${parentProfile.role}'. Guardian links require a parent account.`,
+      };
+    }
+
+    const { data: rel, error: relError } = await supabase
+      .from("guardian_student_relationships")
+      .upsert(
+        {
+          guardian_profile_id: parentProfile.id,
+          student_id: student.id,
+          relationship_type: relationshipType,
+          status: "active",
+          can_view_attendance: permissions.canViewAttendance,
+          can_view_progress: permissions.canViewProgress,
+          can_view_schedule: permissions.canViewSchedule,
+          can_view_fees: permissions.canViewFees,
+          can_receive_notifications: permissions.canReceiveNotifications,
+          verification_method: verificationMethod,
+          verified_at: now,
+          verified_by_profile_id: adminProfileId,
+          updated_at: now,
+        },
+        { onConflict: "guardian_profile_id,student_id" }
+      )
+      .select("id")
+      .single();
+
+    if (relError || !rel) {
+      return { success: false, message: relError?.message || "Failed to establish relationship." };
+    }
+
+    await supabase.from("audit_logs").insert({
+      actor_id: adminProfileId,
+      action: "ADMIN_DIRECT_GUARDIAN_LINK",
+      entity_type: "guardian_student_relationship",
+      entity_id: rel.id,
+      details: {
+        guardian_email: normEmail,
+        student_code: code,
+        verification_method: verificationMethod,
+        permissions,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Direct guardian link verified and activated for student ${code}.`,
+      relationshipId: rel.id,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error connecting parent and student";
+    return { success: false, message: msg };
+  }
+}
+

@@ -9,6 +9,7 @@ export interface AdminMetrics {
   publishedCourses: number;
   totalInstructors: number;
   unreadEnquiries: number;
+  pendingApplications: number;
 }
 
 export interface AuditLogEntry {
@@ -97,6 +98,7 @@ export async function getAdminOverviewMetrics(): Promise<AdminMetrics> {
       publishedCourses: INITIAL_ACADEMY_COURSES.length,
       totalInstructors: APPROVED_ACADEMY_INSTRUCTORS.length,
       unreadEnquiries: 0,
+      pendingApplications: 1,
     };
   }
 
@@ -108,12 +110,14 @@ export async function getAdminOverviewMetrics(): Promise<AdminMetrics> {
       { count: coursesCount },
       { count: instructorsCount },
       { count: enquiriesCount },
+      { count: applicationsCount },
     ] = await Promise.all([
       supabase.from("students").select("*", { count: "exact", head: true }),
       supabase.from("enrollments").select("*", { count: "exact", head: true }).eq("status", "active"),
       supabase.from("courses").select("*", { count: "exact", head: true }).eq("status", "published"),
       supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "instructor"),
       supabase.from("contact_enquiries").select("*", { count: "exact", head: true }).eq("status", "unread"),
+      supabase.from("student_applications").select("*", { count: "exact", head: true }).eq("status", "pending"),
     ]);
 
     return {
@@ -122,6 +126,7 @@ export async function getAdminOverviewMetrics(): Promise<AdminMetrics> {
       publishedCourses: coursesCount || INITIAL_ACADEMY_COURSES.length,
       totalInstructors: instructorsCount || APPROVED_ACADEMY_INSTRUCTORS.length,
       unreadEnquiries: enquiriesCount || 0,
+      pendingApplications: applicationsCount || 0,
     };
   } catch {
     return {
@@ -130,6 +135,7 @@ export async function getAdminOverviewMetrics(): Promise<AdminMetrics> {
       publishedCourses: INITIAL_ACADEMY_COURSES.length,
       totalInstructors: APPROVED_ACADEMY_INSTRUCTORS.length,
       unreadEnquiries: 0,
+      pendingApplications: 1,
     };
   }
 }

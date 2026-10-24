@@ -67,7 +67,26 @@ export async function signInAction(
       (profile?.role as UserRole) ||
       (authData.user.user_metadata?.role as UserRole) ||
       "student";
-    const destination = getPortalRedirect(role);
+    const defaultDestination = getPortalRedirect(role);
+    const rawRedirect = formData.get("redirect")?.toString();
+    const isSafeRelativeUrl =
+      Boolean(rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//"));
+
+    let destination = defaultDestination;
+    if (isSafeRelativeUrl && rawRedirect) {
+      const pathRoleMap: Record<string, UserRole> = {
+        "/admin": "admin",
+        "/instructor": "instructor",
+        "/student": "student",
+        "/parent": "parent",
+      };
+      const matchingPrefix = Object.keys(pathRoleMap).find((prefix) =>
+        rawRedirect.startsWith(prefix)
+      );
+      if (!matchingPrefix || pathRoleMap[matchingPrefix] === role) {
+        destination = rawRedirect;
+      }
+    }
 
     return {
       success: true,
@@ -123,9 +142,14 @@ export async function signUpAction(
     });
 
     if (authError) {
+      const isRateLimit =
+        authError.message.toLowerCase().includes("rate limit") ||
+        (authError as { status?: number }).status === 429;
       return {
         success: false,
-        message: authError.message,
+        message: isRateLimit
+          ? "Supabase email rate limit exceeded. Please wait a few minutes before registering again, or sign in with an existing account."
+          : authError.message,
       };
     }
 

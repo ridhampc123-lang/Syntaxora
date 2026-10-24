@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useActionState, useEffect, useState } from "react";
+import React, { useActionState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signUpAction, type AuthActionResult } from "@/server/actions/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
-import { GraduationCap, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 const initialState: AuthActionResult = {
   success: false,
@@ -15,13 +16,11 @@ const initialState: AuthActionResult = {
 
 export function SignUpForm() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<"student" | "parent">("student");
   const [state, formAction, isPending] = useActionState(signUpAction, initialState);
 
   useEffect(() => {
     if (state.success && state.redirectTo) {
-      router.push(state.redirectTo);
-      router.refresh();
+      window.location.href = state.redirectTo;
     }
   }, [state, router]);
 
@@ -33,52 +32,31 @@ export function SignUpForm() {
         </Alert>
       )}
 
-      {/* Role Selection Tabs - strictly Student or Parent */}
-      <div className="space-y-1.5">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-[#142541]">
-          Register As <span className="text-[#B91C1C] ml-1">*</span>
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setSelectedRole("student")}
-            className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-xs font-semibold transition-all cursor-pointer ${
-              selectedRole === "student"
-                ? "border-[#3869AD] bg-[#E8EFF8] text-[#3869AD]"
-                : "border-[#DCE4EE] bg-white text-[#5F6F84] hover:bg-[#F3F6FA]"
-            }`}
-          >
-            <GraduationCap className="h-4 w-4" aria-hidden="true" />
-            <span>Student</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedRole("parent")}
-            className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-xs font-semibold transition-all cursor-pointer ${
-              selectedRole === "parent"
-                ? "border-[#168B83] bg-[#E2F4F2] text-[#168B83]"
-                : "border-[#DCE4EE] bg-white text-[#5F6F84] hover:bg-[#F3F6FA]"
-            }`}
-          >
-            <Users className="h-4 w-4" aria-hidden="true" />
-            <span>Parent / Guardian</span>
-          </button>
-        </div>
-        <input type="hidden" name="role" value={selectedRole} />
-        {selectedRole === "parent" && (
-          <p className="text-[11px] text-[#5F6F84] leading-normal pt-1">
-            Note: Guardian accounts require an explicit verification invitation to link to student records.
+      {/* Prospective Student Notice */}
+      <div className="rounded-xl border border-[#DCE4EE] bg-[#E8EFF8] p-3.5 flex items-start gap-2.5">
+        <Users className="h-4 w-4 text-[#3869AD] shrink-0 mt-0.5" aria-hidden="true" />
+        <div className="text-xs text-[#263449] space-y-1">
+          <span className="font-bold text-[#142541]">
+            Parent & Guardian Registration Portal
+          </span>
+          <p className="text-[#5F6F84] leading-normal">
+            This registration is exclusively for parents and guardians. Prospective students must submit an{" "}
+            <Link href="/apply" className="font-semibold text-[#3869AD] underline hover:text-[#142541]">
+              Admission Application
+            </Link>{" "}
+            for faculty review.
           </p>
-        )}
+        </div>
       </div>
+
+      <input type="hidden" name="role" value="parent" />
 
       <Input
         label="Full Name"
         name="fullName"
         id="fullName"
         required
-        placeholder="e.g. Alex Morgan"
+        placeholder="e.g. Sarah O'Connor"
         error={state.errors?.fullName?.[0]}
       />
 
@@ -89,7 +67,7 @@ export function SignUpForm() {
         type="email"
         required
         autoComplete="email"
-        placeholder="you@example.com"
+        placeholder="parent@example.com"
         error={state.errors?.email?.[0]}
       />
 
@@ -112,7 +90,7 @@ export function SignUpForm() {
         isLoading={isPending}
         className="w-full justify-center"
       >
-        Create {selectedRole === "parent" ? "Guardian" : "Student"} Account
+        Create Parent Account
       </Button>
     </form>
   );

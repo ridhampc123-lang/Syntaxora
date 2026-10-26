@@ -16,7 +16,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold uppercase tracking-wider text-[#142541]"
+            className="block text-xs font-semibold uppercase tracking-wider text-[#17243A]"
           >
             {label}
             {props.required && <span className="text-[#B91C1C] ml-1" aria-hidden="true">*</span>}
@@ -27,8 +27,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           ref={ref}
           className={cn(
-            "w-full rounded-lg border border-[#DCE4EE] bg-white px-3.5 py-2 text-sm text-[#263449] placeholder:text-[#5F6F84]/60 transition-colors focus:border-[#3869AD] focus:outline-none focus:ring-2 focus:ring-[#3869AD]/20 disabled:cursor-not-allowed disabled:bg-[#F3F6FA] disabled:opacity-75",
-            error && "border-[#B91C1C] focus:border-[#B91C1C] focus:ring-[#B91C1C]/20",
+            "w-full rounded-lg border border-[#DDE2E7] bg-white px-3.5 py-2 text-sm text-[#354052] placeholder:text-[#687386]/60 transition-colors focus:border-[#355F99] focus:outline-none focus:ring-2 focus:ring-[#355F99]/15 disabled:cursor-not-allowed disabled:bg-[#FAF8F3] disabled:opacity-75",
+            error && "border-[#B91C1C] focus:border-[#B91C1C] focus:ring-[#B91C1C]/15",
             className
           )}
           aria-invalid={Boolean(error)}

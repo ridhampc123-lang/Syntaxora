@@ -99,4 +99,32 @@ describe("Phase A: Student Applications & Registration Restrictions", () => {
     expect(stored?.status).toBe("pending");
     expect(stored?.provisioned_student_id).toBeNull();
   });
+
+  it("preserves submitted form values and returns field-specific errors upon validation failure", async () => {
+    const { submitApplicationAction } = await import("@/server/actions/application");
+
+    const formData = new FormData();
+    formData.set("fullName", "J"); // Invalid: less than 2 chars
+    formData.set("email", "invalid-email"); // Invalid: not an email
+    formData.set("phone", "+91 9999999999");
+    formData.set("educationLevel", ""); // Invalid: missing
+    formData.set("statementOfInterest", "Interested in AI");
+    // consent is omitted (false)
+
+    const result = await submitApplicationAction(null, formData);
+
+    expect(result.success).toBe(false);
+    expect(result.values).toBeDefined();
+    expect(result.values?.fullName).toBe("J");
+    expect(result.values?.email).toBe("invalid-email");
+    expect(result.values?.phone).toBe("+91 9999999999");
+    expect(result.values?.statementOfInterest).toBe("Interested in AI");
+
+    // Field-specific error warnings
+    expect(result.errors?.fullName).toBeDefined();
+    expect(result.errors?.email).toBeDefined();
+    expect(result.errors?.educationLevel).toBeDefined();
+    expect(result.errors?.consent).toBeDefined();
+    expect(result.message).toContain("Please correct the");
+  });
 });

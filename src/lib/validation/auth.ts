@@ -20,6 +20,15 @@ export const signUpSchema = z.object({
     message:
       "Student self-registration is disabled. Prospective students must submit an admission application at /apply.",
   }),
+  studentCode: z
+    .string()
+    .regex(/^$|^STU-[A-Za-z0-9-]+$/i, "Student code must be in the format STU-XXXXXXXX")
+    .optional()
+    .or(z.literal("")),
+  relationshipType: z
+    .enum(["parent", "legal_guardian", "other_authorized_guardian"])
+    .optional()
+    .default("parent"),
 });
 
 export const forgotPasswordSchema = z.object({

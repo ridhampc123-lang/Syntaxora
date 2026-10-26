@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard,
   CalendarCheck,
@@ -13,6 +14,8 @@ import { requireRole } from "@/server/services/authService";
 import { getActiveChildrenForGuardian } from "@/server/services/guardianService";
 import { signOutAction } from "@/server/actions/auth";
 
+import { ParentSidebarNav } from "@/components/navigation/ParentSidebarNav";
+
 export default async function ParentLayout({
   children,
 }: {
@@ -21,14 +24,6 @@ export default async function ParentLayout({
   const auth = await requireRole(["parent", "admin"]);
   const activeChildren = await getActiveChildrenForGuardian(auth.userId);
 
-  const navLinks = [
-    { href: "/parent", label: "Overview", icon: LayoutDashboard },
-    { href: "/parent/attendance", label: "Attendance Record", icon: CheckSquare },
-    { href: "/parent/progress", label: "Learning Progress & Grades", icon: Award },
-    { href: "/parent/schedule", label: "Class Schedule", icon: CalendarCheck },
-    { href: "/parent/billing", label: "Tuition & Invoices", icon: CreditCard },
-  ];
-
   return (
     <div className="min-h-screen bg-[#F3F6FA] flex">
       {/* Sidebar */}
@@ -36,8 +31,14 @@ export default async function ParentLayout({
         {/* Brand */}
         <div className="p-6 border-b border-white/10">
           <Link href="/parent" className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-[#168B83] text-white font-extrabold flex items-center justify-center text-sm shadow-md">
-              S
+            <div className="relative h-8 w-8 rounded-lg overflow-hidden bg-[#03060C] border border-white/20 shadow-md shrink-0">
+              <Image
+                src="/icon.png"
+                alt="Syntaxora"
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+              />
             </div>
             <div>
               <span className="font-extrabold text-base tracking-tight block">Syntaxora</span>
@@ -68,22 +69,8 @@ export default async function ParentLayout({
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-2 space-y-1">
-          {navLinks.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold text-[#DCE4EE] hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <Icon className="h-4 w-4 text-[#168B83]" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Navigation with Active State */}
+        <ParentSidebarNav />
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10 space-y-2 text-xs">

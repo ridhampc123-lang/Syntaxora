@@ -13,12 +13,22 @@ import {
   Phone,
   BookOpen,
   Calendar,
+  Copy,
+  Check,
+  Key,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { StudentApplication, ApplicationStatus } from "@/types";
-import { reviewApplicationAction, resendStudentSetupEmailAction, type ActionResult } from "@/server/actions/admin";
+import {
+  reviewApplicationAction,
+  resendStudentSetupEmailAction,
+  resetStudentCredentialsAction,
+  type ActionResult,
+} from "@/server/actions/admin";
 import type { DuplicateDetectionResult } from "@/server/services/applicationService";
 
 const initialActionState: ActionResult = {
@@ -45,6 +55,15 @@ export function ApplicationReviewModal({
   const [decision, setDecision] = useState<ApplicationStatus>(application.status);
   const [resending, setResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<{ message: string; success: boolean } | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedAll, setCopiedAll] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [currentStudentCode, setCurrentStudentCode] = useState<string>(
+    application.student_code || application.student?.student_code || ""
+  );
+
+  const studentCodeDisplay = currentStudentCode || "STU-PENDING";
+  const defaultPassword = "StudentPassword123!";
 
   useEffect(() => {
     if (state.success) {
@@ -61,11 +80,70 @@ export function ApplicationReviewModal({
     setResendStatus(null);
     try {
       const res = await resendStudentSetupEmailAction(application.id);
+      if (res.studentCode) {
+        setCurrentStudentCode(res.studentCode);
+      }
       setResendStatus({ message: res.message, success: res.success });
     } catch {
       setResendStatus({ message: "Network error attempting to resend setup email.", success: false });
     } finally {
       setResending(false);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (!studentCodeDisplay) return;
+    try {
+      await navigator.clipboard.writeText(studentCodeDisplay);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleCopyAllCredentials = async () => {
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    const text = [
+      `🎓 Syntaxora AI Academy — Student Portal Credentials`,
+      `======================================================`,
+      `Student Name: ${application.full_name}`,
+      `Student Code: ${studentCodeDisplay}`,
+      `Login URL: ${siteUrl}/login?email=${encodeURIComponent(application.email)}&setup=true`,
+      `Email Address: ${application.email}`,
+      `Temporary Password: ${defaultPassword}`,
+      `======================================================`,
+      `📌 Instructions:`,
+      `1. Open the Login URL and sign in using your email and temporary password.`,
+      `2. You may change your password anytime in your student settings.`,
+      `3. Share your Student Code (${studentCodeDisplay}) with your parent/guardian to link their account.`,
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedAll(true);
+      setTimeout(() => setCopiedAll(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setResetting(true);
+    setResendStatus(null);
+    try {
+      const res = await resetStudentCredentialsAction(application.id);
+      if (res.studentCode) {
+        setCurrentStudentCode(res.studentCode);
+      }
+      setResendStatus({
+        message: res.success ? `${res.message} Temporary Password: ${defaultPassword}` : res.message,
+        success: res.success,
+      });
+    } catch {
+      setResendStatus({ message: "Network error attempting to reset student credentials.", success: false });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -215,9 +293,9 @@ export function ApplicationReviewModal({
           )}
         </div>
 
-        {/* Provisioned Student Banner & Resend Action */}
+        {/* Provisioned Student Credentials & Access Card */}
         {application.provisioned_student_id && (
-          <div className="rounded-xl border border-[#3869AD]/30 bg-[#E8EFF8]/60 p-4 space-y-3">
+          <div className="rounded-xl border border-[#3869AD]/30 bg-[#E8EFF8]/60 p-4 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[#168B83]" />
@@ -228,18 +306,96 @@ export function ApplicationReviewModal({
                   ({new Date(application.provisioned_at || application.updated_at).toLocaleDateString()})
                 </span>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleResendSetupEmail}
-                isLoading={resending}
-                className="text-xs"
-              >
-                <Mail className="h-3 w-3 mr-1" />
-                Resend Setup Email
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyAllCredentials}
+                  className="text-xs font-semibold bg-white text-[#142541]"
+                >
+                  {copiedAll ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 mr-1 text-emerald-600" />
+                      Copied Details!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                      Copy All Credentials
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResendSetupEmail}
+                  isLoading={resending}
+                  className="text-xs"
+                >
+                  <Mail className="h-3 w-3 mr-1" />
+                  Resend Email
+                </Button>
+              </div>
             </div>
+
+            {/* Credentials Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-white border border-[#DCE4EE] text-xs">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5F6F84]">
+                  Permanent Student Code
+                </span>
+                <div className="flex items-center gap-1.5 font-mono font-bold text-sm text-[#3869AD]">
+                  <span>{studentCodeDisplay}</span>
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    title="Copy student code"
+                    className="p-1 rounded hover:bg-[#E8EFF8] text-[#5F6F84] hover:text-[#3869AD] transition-colors cursor-pointer"
+                  >
+                    {copiedCode ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#5F6F84]">Required for parent portal linking.</p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5F6F84]">
+                  Login Email
+                </span>
+                <div className="font-semibold text-[#142541] truncate">{application.email}</div>
+                <p className="text-[10px] text-[#5F6F84]">Student&apos;s registered email.</p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5F6F84]">
+                  Default / Temporary Password
+                </span>
+                <div className="flex items-center gap-1.5 font-mono font-bold text-sm text-[#142541]">
+                  <span>{defaultPassword}</span>
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={resetting}
+                    title="Reset to StudentPassword123!"
+                    className="p-1 rounded hover:bg-[#E8EFF8] text-[#5F6F84] hover:text-[#3869AD] transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${resetting ? "animate-spin" : ""}`} />
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#5F6F84]">Click icon to reset if student forgets.</p>
+              </div>
+            </div>
+
+            {/* Email Dispatch Notice */}
+            <div className="text-[11px] text-[#5F6F84] bg-[#F8FAFC] p-2.5 rounded-lg border border-[#DCE4EE] flex items-start gap-2">
+              <span className="text-amber-500 font-bold shrink-0">ℹ️ Notice:</span>
+              <span>
+                If email delivery is not configured (RESEND_API_KEY in .env.local), emails will not reach inboxes. You can click <strong>&ldquo;Copy All Credentials&rdquo;</strong> above to send the login details directly to the student or parent via WhatsApp, SMS, or email.
+              </span>
+            </div>
+
             {resendStatus && (
               <Alert variant={resendStatus.success ? "success" : "warning"}>
                 {resendStatus.message}

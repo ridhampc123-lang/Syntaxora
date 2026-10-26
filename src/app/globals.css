@@ -1,48 +1,278 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy: #142541;
-  --color-navy-dark: #0d192d;
-  --color-primary-blue: #3869AD;
-  --color-primary-hover: #2d558d;
-  --color-teal: #168B83;
-  --color-teal-dark: #0f6862;
-  --color-cloud: #F3F6FA;
+  --color-deep-ink: #17243A;
+  --color-primary-blue: #355F99;
+  --color-primary-hover: #294D7F;
+  --color-teal-accent: #167F78;
+  --color-teal-hover: #11655F;
+  --color-warm-paper: #FAF8F3;
+  --color-soft-neutral: #F0F2F4;
+  --color-body-text: #354052;
+  --color-muted-text: #687386;
+  --color-border-subtle: #DDE2E7;
+  --color-warm-accent: #D7A66A;
+
+  --color-navy: #17243A;
+  --color-navy-dark: #0F1827;
+  --color-teal: #167F78;
+  --color-cloud: #F0F2F4;
   --color-surface: #FFFFFF;
-  --color-body: #263449;
-  --color-muted: #5F6F84;
-  --color-border: #DCE4EE;
-  
+  --color-body: #354052;
+  --color-muted: #687386;
+  --color-border: #DDE2E7;
+
   --color-success: #15803D;
   --color-warning: #B45309;
   --color-error: #B91C1C;
+
+  --font-sans: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-serif), "Newsreader", "Charter", "Georgia", serif;
 }
 
 :root {
-  --background: #F3F6FA;
-  --foreground: #263449;
+  --background: #FAF8F3;
+  --foreground: #354052;
   --surface: #FFFFFF;
-  --border: #DCE4EE;
-  --primary: #3869AD;
-  --navy: #142541;
-  --teal: #168B83;
-  --muted: #5F6F84;
+  --border: #DDE2E7;
+  --primary: #355F99;
+  --navy: #17243A;
+  --teal: #167F78;
+  --muted: #687386;
+  --warm-paper: #FAF8F3;
+  --soft-neutral: #F0F2F4;
+  --warm-accent: #D7A66A;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans);
   min-height: 100vh;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Accessible focus ring */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* Editorial display typography */
+.font-display {
+  font-family: var(--font-serif);
+}
+
+/* Micro animations & Motion System */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes blinkCursor {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-dot {
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+.animate-cursor {
+  animation: blinkCursor 1s step-end infinite;
+}
+
+/* Animation Delays for Staggered Entrances */
+.animation-delay-75 {
+  animation-delay: 75ms;
+}
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+.animation-delay-225 {
+  animation-delay: 225ms;
+}
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+.animation-delay-375 {
+  animation-delay: 375ms;
+}
+
+/* Card & Surface Micro-Interactions */
+.card-editorial {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+
+.card-editorial:hover {
+  transform: translateY(-2.5px);
+  box-shadow: 0 10px 24px -4px rgba(23, 36, 58, 0.08), 0 4px 8px -2px rgba(23, 36, 58, 0.03);
+  border-color: rgba(53, 95, 153, 0.35);
+}
+
+/* =========================================================================
+   Dhruv Rathee AI Masterclass Signature Gradient & Highlighting System
+   Palette: Electric Blue (#3188FF) -> Vivid Magenta (#D34BE9) -> Radiant Amber (#FF994B)
+   ========================================================================= */
+
+/* Primary AI Gradient Text - High Contrast, Vivid, Crisp */
+.text-gradient-ai {
+  background: linear-gradient(90deg, #3188FF 0%, #D34BE9 50.5%, #FF994B 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #3188FF;
+  font-weight: 800;
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  background-size: 200% auto;
+  transition: background-position 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+}
+
+.text-gradient-ai:hover {
+  background-position: right center;
+  filter: drop-shadow(0 2px 10px rgba(211, 75, 233, 0.35));
+}
+
+/* AI Gradient Text on Dark/Ink Surfaces with Luminous Glow */
+.text-gradient-ai-glow {
+  background: linear-gradient(90deg, #4EA1FF 0%, #E364F8 50.5%, #FFA861 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #4EA1FF;
+  font-weight: 800;
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  background-size: 200% auto;
+  filter: drop-shadow(0 2px 12px rgba(227, 100, 248, 0.45));
+  transition: background-position 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+}
+
+.text-gradient-ai-glow:hover {
+  background-position: right center;
+  filter: drop-shadow(0 4px 18px rgba(227, 100, 248, 0.65));
+}
+
+/* Subtle Pill / Luminous AI Badge (Directly Inspired by Dhruv Rathee's .lspota) */
+.badge-ai-gradient {
+  background: linear-gradient(90deg, rgba(49, 136, 255, 0.10) 0%, rgba(211, 75, 233, 0.12) 50.5%, rgba(255, 153, 75, 0.12) 100%);
+  border: 1px solid rgba(211, 75, 233, 0.35);
+  box-shadow: 0 0 14px rgba(211, 75, 233, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.badge-ai-gradient:hover {
+  background: linear-gradient(90deg, rgba(49, 136, 255, 0.16) 0%, rgba(211, 75, 233, 0.18) 50.5%, rgba(255, 153, 75, 0.18) 100%);
+  border-color: rgba(211, 75, 233, 0.6);
+  box-shadow: 0 0 20px rgba(211, 75, 233, 0.28);
+  transform: translateY(-1px);
+}
+
+/* Gradient Button Accent (Inspired by Dhruv Rathee's .ai-button) */
+.btn-gradient-ai {
+  background: linear-gradient(90deg, #3188FF 0%, #D34BE9 50.5%, #FF994B 100%);
+  background-size: 200% auto;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 4px 18px rgba(211, 75, 233, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-gradient-ai:hover {
+  background-position: right center;
+  box-shadow: 0 6px 24px rgba(211, 75, 233, 0.5);
+  transform: translateY(-1.5px);
+}
+
+/* Luminous AI Gradient Card Border on Hover */
+.card-ai-glow {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-ai-glow:hover {
+  border-color: rgba(211, 75, 233, 0.5) !important;
+  box-shadow: 0 12px 30px -4px rgba(49, 136, 255, 0.12), 0 0 20px -2px rgba(211, 75, 233, 0.2);
+  transform: translateY(-3px);
+}
+
+/* Arrow micro-shift on hover */
+.group:hover .arrow-icon,
+.group:hover .arrow-shift {
+  transform: translateX(3px);
+}
+
+.arrow-icon,
+.arrow-shift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Interactive button press */
+button:active:not(:disabled),
+a.btn-interactive:active {
+  transform: scale(0.985);
 }
 
 /* Reduced motion preference */
@@ -54,3 +284,4 @@ body {
     scroll-behavior: auto !important;
   }
 }
+

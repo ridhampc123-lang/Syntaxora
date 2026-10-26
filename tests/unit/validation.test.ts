@@ -57,3 +57,48 @@ describe("Contact Form Validation Schema", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("Parent Sign Up Schema & Student Code Linking", () => {
+  it("validates parent registration with a valid student code", async () => {
+    const { signUpSchema } = await import("@/lib/validation/auth");
+    const validData = {
+      fullName: "Eleanor Vance",
+      email: "eleanor.vance@example.com",
+      password: "Password123",
+      role: "parent",
+      studentCode: "STU-8F39A1C2",
+      relationshipType: "parent",
+    };
+    const result = signUpSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("validates parent registration without student code (optional)", async () => {
+    const { signUpSchema } = await import("@/lib/validation/auth");
+    const validData = {
+      fullName: "David Chen",
+      email: "david.chen@example.com",
+      password: "Password123",
+      role: "parent",
+      studentCode: "",
+    };
+    const result = signUpSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects student direct self-registration", async () => {
+    const { signUpSchema } = await import("@/lib/validation/auth");
+    const studentData = {
+      fullName: "Direct Student",
+      email: "student@example.com",
+      password: "Password123",
+      role: "student",
+    };
+    const result = signUpSchema.safeParse(studentData);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toContain("Student self-registration is disabled");
+    }
+  });
+});
+

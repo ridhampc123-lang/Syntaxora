@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard,
   CalendarCheck,
@@ -34,8 +35,14 @@ export default async function InstructorLayout({
         {/* Brand */}
         <div className="p-6 border-b border-white/10">
           <Link href="/instructor" className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-[#168B83] text-white font-extrabold flex items-center justify-center text-sm shadow-md">
-              S
+            <div className="relative h-8 w-8 rounded-lg overflow-hidden bg-[#03060C] border border-white/20 shadow-md shrink-0">
+              <Image
+                src="/icon.png"
+                alt="Syntaxora"
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+              />
             </div>
             <div>
               <span className="font-extrabold text-base tracking-tight block">Syntaxora</span>

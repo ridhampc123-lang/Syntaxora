@@ -166,7 +166,19 @@ export function AdminApplicationsTable({ applications, duplicateMap }: Props) {
                         <div className="text-[11px] text-[#5F6F84]">{app.education_level}</div>
                       </td>
 
-                      <td className="p-3.5">{getStatusBadge(app.status)}</td>
+                      <td className="p-3.5">
+                        <div className="flex flex-col gap-1 items-start">
+                          {getStatusBadge(app.status)}
+                          {(app.student_code || app.student?.student_code) && (
+                            <span
+                              title="Permanent Student Code"
+                              className="font-mono text-[10px] font-bold text-[#3869AD] bg-[#E8EFF8] px-1.5 py-0.5 rounded"
+                            >
+                              {app.student_code || app.student?.student_code}
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
                       <td className="p-3.5 text-[#5F6F84] text-[11px]">
                         {new Date(app.created_at).toLocaleDateString()}

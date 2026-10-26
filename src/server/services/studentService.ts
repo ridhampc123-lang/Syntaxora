@@ -15,7 +15,9 @@ import {
   IN_MEMORY_ASSIGNMENTS,
   IN_MEMORY_SUBMISSIONS,
   IN_MEMORY_ATTENDANCE,
+  IN_MEMORY_SESSIONS,
 } from "./instructorService";
+import { IN_MEMORY_ENROLLMENTS } from "./enrollmentService";
 
 function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -78,28 +80,55 @@ export async function getStudentByProfileId(profileId: string): Promise<Student 
 }
 
 /**
- * Returns enrolled courses for a student.
+ * Returns enrolled courses for a student, enriched with full curriculum modules & lessons.
  */
 export async function getStudentCourses(_studentId: string): Promise<Course[]> {
+  const enrichModules = (courses: Course[]): Course[] => {
+    return courses.map((c) => {
+      if (!c.modules || c.modules.length === 0) {
+        const fallback = INITIAL_ACADEMY_COURSES.find(
+          (fc) => fc.id === c.id || fc.slug === c.slug
+        );
+        if (fallback?.modules) {
+          return { ...c, modules: fallback.modules };
+        }
+        return { ...c, modules: INITIAL_ACADEMY_COURSES[0].modules };
+      }
+      return c;
+    });
+  };
+
   if (!isSupabaseConfigured()) {
-    return [INITIAL_ACADEMY_COURSES[0]];
+    const enrollments = IN_MEMORY_ENROLLMENTS.filter(
+      (e) => e.student_id === _studentId && e.status === "active"
+    );
+    if (enrollments.length > 0) {
+      const courseIds = new Set(enrollments.map((e) => e.course_id));
+      const matched = INITIAL_ACADEMY_COURSES.filter((c) => courseIds.has(c.id));
+      if (matched.length > 0) return enrichModules(matched);
+    }
+    return enrichModules([INITIAL_ACADEMY_COURSES[0]]);
   }
 
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("enrollments")
-      .select("course:courses (*)")
+      .select("course:courses (*, modules:course_modules (*, lessons (*)))")
       .eq("student_id", _studentId)
       .eq("status", "active");
 
     if (error || !data || data.length === 0) {
-      return [INITIAL_ACADEMY_COURSES[0]];
+      return enrichModules([INITIAL_ACADEMY_COURSES[0]]);
     }
 
-    return (data as unknown as { course: Course }[]).map((e) => e.course);
+    const courses = (data as unknown as { course: Course }[])
+      .map((e) => e.course)
+      .filter(Boolean);
+
+    return courses.length > 0 ? enrichModules(courses) : enrichModules([INITIAL_ACADEMY_COURSES[0]]);
   } catch {
-    return [INITIAL_ACADEMY_COURSES[0]];
+    return enrichModules([INITIAL_ACADEMY_COURSES[0]]);
   }
 }
 
@@ -293,30 +322,76 @@ export async function getStudentReleasedGrades(
 }
 
 /**
- * Returns attendance history for a student.
+ * Returns attendance history for a student with populated session and course details.
  */
 export async function getStudentAttendance(
   studentId: string
 ): Promise<AttendanceRecord[]> {
+  const attachInMemorySession = (records: AttendanceRecord[]): AttendanceRecord[] => {
+    return records.map((a) => {
+      const session = a.session || IN_MEMORY_SESSIONS.find((s) => s.id === a.class_session_id);
+      return {
+        ...a,
+        session: session
+          ? {
+              ...session,
+              course: session.course || INITIAL_ACADEMY_COURSES[0],
+            }
+          : undefined,
+      };
+    });
+  };
+
   if (!isSupabaseConfigured()) {
-    return IN_MEMORY_ATTENDANCE.filter((a) => a.student_id === studentId);
+    return attachInMemorySession(IN_MEMORY_ATTENDANCE.filter((a) => a.student_id === studentId));
   }
 
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("attendance_records")
-      .select("*, session:class_sessions (*)")
+      .select("*, session:class_sessions (*, course:courses (*), batch:batches (*))")
       .eq("student_id", studentId)
       .order("recorded_at", { ascending: false });
 
-    if (error || !data) {
-      return IN_MEMORY_ATTENDANCE.filter((a) => a.student_id === studentId);
+    if (error || !data || data.length === 0) {
+      return attachInMemorySession(IN_MEMORY_ATTENDANCE.filter((a) => a.student_id === studentId));
     }
 
     return data as unknown as AttendanceRecord[];
   } catch {
-    return IN_MEMORY_ATTENDANCE.filter((a) => a.student_id === studentId);
+    return attachInMemorySession(IN_MEMORY_ATTENDANCE.filter((a) => a.student_id === studentId));
+  }
+}
+
+/**
+ * Returns array of completed lesson IDs for a student.
+ */
+export async function getStudentCompletedLessons(studentId: string): Promise<string[]> {
+  if (!isSupabaseConfigured()) {
+    return IN_MEMORY_PROGRESS
+      .filter((p) => p.student_id === studentId)
+      .map((p) => p.lesson_id);
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("learning_progress")
+      .select("lesson_id")
+      .eq("student_id", studentId);
+
+    if (error || !data) {
+      return IN_MEMORY_PROGRESS
+        .filter((p) => p.student_id === studentId)
+        .map((p) => p.lesson_id);
+    }
+
+    return data.map((d) => d.lesson_id);
+  } catch {
+    return IN_MEMORY_PROGRESS
+      .filter((p) => p.student_id === studentId)
+      .map((p) => p.lesson_id);
   }
 }
 

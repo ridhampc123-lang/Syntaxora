@@ -10,6 +10,19 @@ export interface ApplicationActionResult {
   reference?: string;
   duplicate?: boolean;
   errors?: Record<string, string[]>;
+  values?: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    dateOfBirth?: string;
+    courseId?: string;
+    educationLevel?: string;
+    guardianName?: string;
+    guardianEmail?: string;
+    guardianPhone?: string;
+    statementOfInterest?: string;
+    consent?: boolean;
+  };
 }
 
 export async function submitApplicationAction(
@@ -38,10 +51,12 @@ export async function submitApplicationAction(
       if (!errors[path]) errors[path] = [];
       errors[path].push(issue.message);
     }
+    const errorCount = Object.keys(errors).length;
     return {
       success: false,
-      message: "Please correct the highlighted fields before submitting.",
+      message: `Please correct the ${errorCount} highlighted detail${errorCount > 1 ? "s" : ""} below before submitting. Your entered data has been kept intact.`,
       errors,
+      values: rawData,
     };
   }
 
@@ -64,5 +79,6 @@ export async function submitApplicationAction(
     message: result.message,
     reference: result.reference,
     duplicate: result.duplicate,
+    values: result.success ? undefined : rawData,
   };
 }

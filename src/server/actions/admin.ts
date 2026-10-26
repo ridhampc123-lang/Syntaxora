@@ -7,14 +7,40 @@ import { CourseLevel, AudienceGroup, DeliveryMode, StudentStatus, AttendanceStat
 import {
   createStudentSchema,
   createCourseSchema,
+  updateCourseDetailsSchema,
+  addCourseModuleSchema,
+  updateCourseModuleSchema,
+  addLessonSchema,
   attendanceCorrectionSchema,
+  createInstructorSchema,
+  updateInstructorSchema,
 } from "@/lib/validation/admin";
+import {
+  createInstructor,
+  updateInstructor,
+  deleteInstructor,
+} from "@/server/services/instructorService";
+import {
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  toggleCoursePublishStatus,
+  addCourseModule,
+  updateCourseModule,
+  deleteCourseModule,
+  addLessonToModule,
+  deleteLessonFromModule,
+} from "@/server/services/courseService";
 
 export interface ActionResult {
   success: boolean;
   message: string;
   errors?: Record<string, string[]>;
+  courseId?: string;
+  studentCode?: string;
+  temporaryPassword?: string;
 }
+
 
 // Helper to record immutable audit log entries
 export async function logAuditEvent(
@@ -120,7 +146,9 @@ export async function createCourseAction(
     audienceGroup: formData.get("audienceGroup")?.toString() || "teens",
     deliveryMode: formData.get("deliveryMode")?.toString() || "live_online",
     durationWeeks: formData.get("durationWeeks")?.toString() || "8",
-    priceInDollars: formData.get("priceInDollars")?.toString() || "0",
+    priceInRupees: formData.get("priceInRupees")?.toString() || formData.get("priceInDollars")?.toString() || "0",
+    priceInDollars: formData.get("priceInRupees")?.toString() || formData.get("priceInDollars")?.toString() || "0",
+    initialTopicsJson: formData.get("initialTopicsJson")?.toString() || "",
   };
 
   const validation = createCourseSchema.safeParse(rawData);
@@ -135,45 +163,155 @@ export async function createCourseAction(
   }
 
   try {
-    const supabase = await createClient();
-    const priceInCents = Math.round(validation.data.priceInDollars * 100);
+    const priceAmount = validation.data.priceInRupees ?? validation.data.priceInDollars;
+    const priceInCents = Math.round(priceAmount * 100);
 
-    const { data: course, error } = await supabase
-      .from("courses")
-      .insert({
-        title: validation.data.title,
-        slug: validation.data.slug,
-        summary: validation.data.summary,
-        description: validation.data.description,
-        level: validation.data.level as CourseLevel,
-        audience_group: validation.data.audienceGroup as AudienceGroup,
-        delivery_mode: validation.data.deliveryMode as DeliveryMode,
-        duration_weeks: validation.data.durationWeeks,
-        price_in_cents: priceInCents,
-        currency: "USD",
-        status: "draft",
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return { success: false, message: error.message };
+    let initialTopics: { title: string; description?: string; lessons?: string[] }[] = [];
+    if (validation.data.initialTopicsJson) {
+      try {
+        const parsed = JSON.parse(validation.data.initialTopicsJson);
+        if (Array.isArray(parsed)) {
+          initialTopics = parsed;
+        }
+      } catch {
+        // Fallback: ignore bad JSON
+      }
     }
 
-    await logAuditEvent(actor.userId, "COURSE_CREATED", "COURSE", course.id, {
+    const result = await createCourse({
       title: validation.data.title,
       slug: validation.data.slug,
+      summary: validation.data.summary,
+      description: validation.data.description,
+      level: validation.data.level as CourseLevel,
+      audience_group: validation.data.audienceGroup as AudienceGroup,
+      delivery_mode: validation.data.deliveryMode as DeliveryMode,
+      duration_weeks: validation.data.durationWeeks,
+      price_in_cents: priceInCents,
+      currency: "INR",
+      status: "draft",
+      initialTopics,
+    });
+
+    if (!result.success || !result.course) {
+      return { success: false, message: result.error || "Failed to create course." };
+    }
+
+    await logAuditEvent(actor.userId, "COURSE_CREATED", "COURSE", result.course.id, {
+      title: validation.data.title,
+      slug: validation.data.slug,
+      topicsCount: initialTopics.length,
     });
 
     revalidatePath("/admin/courses");
     revalidatePath("/courses");
     return {
       success: true,
-      message: `Course "${validation.data.title}" created as draft.`,
+      message: `Course "${validation.data.title}" created successfully.`,
+      courseId: result.course.id,
     };
   } catch (err) {
     console.error("[Create Course Error]", err);
     return { success: false, message: "Failed to create course." };
+  }
+}
+
+export async function updateCourseDetailsAction(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  const rawData = {
+    courseId: formData.get("courseId")?.toString() || "",
+    title: formData.get("title")?.toString() || "",
+    slug: formData.get("slug")?.toString() || "",
+    summary: formData.get("summary")?.toString() || "",
+    description: formData.get("description")?.toString() || "",
+    level: formData.get("level")?.toString() || "beginner",
+    audienceGroup: formData.get("audienceGroup")?.toString() || "teens",
+    deliveryMode: formData.get("deliveryMode")?.toString() || "live_online",
+    durationWeeks: formData.get("durationWeeks")?.toString() || "8",
+    priceInRupees: formData.get("priceInRupees")?.toString() || formData.get("priceInDollars")?.toString() || "0",
+    priceInDollars: formData.get("priceInRupees")?.toString() || formData.get("priceInDollars")?.toString() || "0",
+    status: formData.get("status")?.toString() || undefined,
+  };
+
+  const validation = updateCourseDetailsSchema.safeParse(rawData);
+  if (!validation.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of validation.error.issues) {
+      const path = issue.path[0]?.toString() || "form";
+      if (!errors[path]) errors[path] = [];
+      errors[path].push(issue.message);
+    }
+    return { success: false, message: "Validation error", errors };
+  }
+
+  try {
+    const priceAmount = validation.data.priceInRupees ?? validation.data.priceInDollars;
+    const priceInCents = Math.round(priceAmount * 100);
+
+    const result = await updateCourse(validation.data.courseId, {
+      title: validation.data.title,
+      slug: validation.data.slug,
+      summary: validation.data.summary,
+      description: validation.data.description,
+      level: validation.data.level as CourseLevel,
+      audience_group: validation.data.audienceGroup as AudienceGroup,
+      delivery_mode: validation.data.deliveryMode as DeliveryMode,
+      duration_weeks: validation.data.durationWeeks,
+      price_in_cents: priceInCents,
+      currency: "INR",
+      status: validation.data.status as "draft" | "published" | undefined,
+    });
+
+    if (!result.success) {
+      return { success: false, message: result.error || "Failed to update course." };
+    }
+
+    await logAuditEvent(actor.userId, "COURSE_UPDATED", "COURSE", validation.data.courseId, {
+      title: validation.data.title,
+      slug: validation.data.slug,
+      priceInDollars: validation.data.priceInDollars,
+    });
+
+    revalidatePath("/admin/courses");
+    revalidatePath(`/admin/courses/${validation.data.courseId}`);
+    revalidatePath("/courses");
+    revalidatePath(`/courses/${validation.data.slug}`);
+
+    return {
+      success: true,
+      message: "Course details and pricing successfully updated.",
+    };
+  } catch (err) {
+    console.error("[Update Course Error]", err);
+    return { success: false, message: "Failed to update course details." };
+  }
+}
+
+export async function deleteCourseAction(courseId: string): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  try {
+    const result = await deleteCourse(courseId);
+    if (!result.success) {
+      return { success: false, message: result.error || "Failed to delete course." };
+    }
+
+    await logAuditEvent(actor.userId, "COURSE_DELETED", "COURSE", courseId, {});
+
+    revalidatePath("/admin/courses");
+    revalidatePath("/courses");
+
+    return {
+      success: true,
+      message: "Course successfully deleted.",
+    };
+  } catch (err) {
+    console.error("[Delete Course Error]", err);
+    return { success: false, message: "Failed to delete course." };
   }
 }
 
@@ -184,39 +322,274 @@ export async function toggleCoursePublishAction(
   const actor = await requireRole(["admin"]);
 
   try {
-    const supabase = await createClient();
-    const nextStatus = currentStatus === "published" ? "draft" : "published";
-    const publishedAt = nextStatus === "published" ? new Date().toISOString() : null;
-
-    const { error } = await supabase
-      .from("courses")
-      .update({
-        status: nextStatus,
-        published_at: publishedAt,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", courseId);
-
-    if (error) {
-      return { success: false, message: error.message };
+    const result = await toggleCoursePublishStatus(courseId, currentStatus);
+    if (!result.success) {
+      return { success: false, message: result.error || "Failed to update course status." };
     }
 
     await logAuditEvent(actor.userId, "COURSE_STATUS_TOGGLED", "COURSE", courseId, {
       previous_status: currentStatus,
-      new_status: nextStatus,
+      new_status: result.newStatus,
     });
 
     revalidatePath("/admin/courses");
+    revalidatePath(`/admin/courses/${courseId}`);
     revalidatePath("/courses");
+
     return {
       success: true,
-      message: `Course is now ${nextStatus}.`,
+      message: `Course is now ${result.newStatus}.`,
     };
   } catch (err) {
     console.error("[Toggle Course Error]", err);
     return { success: false, message: "Failed to update course status." };
   }
 }
+
+export async function addCourseModuleAction(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  const rawData = {
+    courseId: formData.get("courseId")?.toString() || "",
+    title: formData.get("title")?.toString() || "",
+    description: formData.get("description")?.toString() || "",
+    lessonsRaw: formData.get("lessonsRaw")?.toString() || "",
+  };
+
+  const validation = addCourseModuleSchema.safeParse(rawData);
+  if (!validation.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of validation.error.issues) {
+      const path = issue.path[0]?.toString() || "form";
+      if (!errors[path]) errors[path] = [];
+      errors[path].push(issue.message);
+    }
+    return { success: false, message: "Validation error", errors };
+  }
+
+  try {
+    // Parse raw lessons text (line by line or semicolon separated)
+    const lessons: { title: string; lessonType: "lecture" | "lab" | "project" | "quiz"; isPreview: boolean }[] = [];
+    if (validation.data.lessonsRaw) {
+      const lines = validation.data.lessonsRaw
+        .split(/[\n;]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      for (let i = 0; i < lines.length; i++) {
+        lessons.push({
+          title: lines[i],
+          lessonType: i === lines.length - 1 && lines.length > 2 ? "project" : "lecture",
+          isPreview: i === 0,
+        });
+      }
+    }
+
+    const result = await addCourseModule(validation.data.courseId, {
+      title: validation.data.title,
+      description: validation.data.description,
+      lessons,
+    });
+
+    if (!result.success || !result.module) {
+      return { success: false, message: result.error || "Failed to add topic module." };
+    }
+
+    await logAuditEvent(actor.userId, "COURSE_MODULE_ADDED", "COURSE_MODULE", result.module.id, {
+      courseId: validation.data.courseId,
+      title: validation.data.title,
+    });
+
+    revalidatePath("/admin/courses");
+    revalidatePath(`/admin/courses/${validation.data.courseId}`);
+    revalidatePath("/courses");
+
+    return {
+      success: true,
+      message: `Topic "${validation.data.title}" added to syllabus.`,
+    };
+  } catch (err) {
+    console.error("[Add Course Module Error]", err);
+    return { success: false, message: "Failed to add topic." };
+  }
+}
+
+export async function updateCourseModuleAction(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  const rawData = {
+    courseId: formData.get("courseId")?.toString() || "",
+    moduleId: formData.get("moduleId")?.toString() || "",
+    title: formData.get("title")?.toString() || "",
+    description: formData.get("description")?.toString() || "",
+  };
+
+  const validation = updateCourseModuleSchema.safeParse(rawData);
+  if (!validation.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of validation.error.issues) {
+      const path = issue.path[0]?.toString() || "form";
+      if (!errors[path]) errors[path] = [];
+      errors[path].push(issue.message);
+    }
+    return { success: false, message: "Validation error", errors };
+  }
+
+  try {
+    const result = await updateCourseModule(validation.data.courseId, validation.data.moduleId, {
+      title: validation.data.title,
+      description: validation.data.description,
+    });
+
+    if (!result.success) {
+      return { success: false, message: result.error || "Failed to update topic." };
+    }
+
+    await logAuditEvent(actor.userId, "COURSE_MODULE_UPDATED", "COURSE_MODULE", validation.data.moduleId, {
+      courseId: validation.data.courseId,
+      title: validation.data.title,
+    });
+
+    revalidatePath("/admin/courses");
+    revalidatePath(`/admin/courses/${validation.data.courseId}`);
+    revalidatePath("/courses");
+
+    return {
+      success: true,
+      message: "Topic details updated successfully.",
+    };
+  } catch (err) {
+    console.error("[Update Course Module Error]", err);
+    return { success: false, message: "Failed to update topic." };
+  }
+}
+
+export async function deleteCourseModuleAction(
+  courseId: string,
+  moduleId: string
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  try {
+    const result = await deleteCourseModule(courseId, moduleId);
+    if (!result.success) {
+      return { success: false, message: result.error || "Failed to delete topic." };
+    }
+
+    await logAuditEvent(actor.userId, "COURSE_MODULE_DELETED", "COURSE_MODULE", moduleId, {
+      courseId,
+    });
+
+    revalidatePath("/admin/courses");
+    revalidatePath(`/admin/courses/${courseId}`);
+    revalidatePath("/courses");
+
+    return {
+      success: true,
+      message: "Topic module removed.",
+    };
+  } catch (err) {
+    console.error("[Delete Course Module Error]", err);
+    return { success: false, message: "Failed to delete topic." };
+  }
+}
+
+export async function addLessonAction(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  const rawData = {
+    courseId: formData.get("courseId")?.toString() || "",
+    moduleId: formData.get("moduleId")?.toString() || "",
+    title: formData.get("title")?.toString() || "",
+    lessonType: formData.get("lessonType")?.toString() || "lecture",
+    description: formData.get("description")?.toString() || "",
+    isPreview: formData.get("isPreview") === "true" || formData.get("isPreview") === "on",
+  };
+
+  const validation = addLessonSchema.safeParse(rawData);
+  if (!validation.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of validation.error.issues) {
+      const path = issue.path[0]?.toString() || "form";
+      if (!errors[path]) errors[path] = [];
+      errors[path].push(issue.message);
+    }
+    return { success: false, message: "Validation error", errors };
+  }
+
+  try {
+    const result = await addLessonToModule(validation.data.courseId, validation.data.moduleId, {
+      title: validation.data.title,
+      description: validation.data.description,
+      lessonType: validation.data.lessonType,
+      isPreview: validation.data.isPreview,
+    });
+
+    if (!result.success || !result.lesson) {
+      return { success: false, message: result.error || "Failed to add lesson." };
+    }
+
+    await logAuditEvent(actor.userId, "LESSON_ADDED", "LESSON", result.lesson.id, {
+      courseId: validation.data.courseId,
+      moduleId: validation.data.moduleId,
+      title: validation.data.title,
+    });
+
+    revalidatePath("/admin/courses");
+    revalidatePath(`/admin/courses/${validation.data.courseId}`);
+    revalidatePath("/courses");
+
+    return {
+      success: true,
+      message: `Lesson "${validation.data.title}" added to topic.`,
+    };
+  } catch (err) {
+    console.error("[Add Lesson Error]", err);
+    return { success: false, message: "Failed to add lesson." };
+  }
+}
+
+export async function deleteLessonAction(
+  courseId: string,
+  moduleId: string,
+  lessonId: string
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  try {
+    const result = await deleteLessonFromModule(courseId, moduleId, lessonId);
+    if (!result.success) {
+      return { success: false, message: result.error || "Failed to remove lesson." };
+    }
+
+    await logAuditEvent(actor.userId, "LESSON_DELETED", "LESSON", lessonId, {
+      courseId,
+      moduleId,
+    });
+
+    revalidatePath("/admin/courses");
+    revalidatePath(`/admin/courses/${courseId}`);
+    revalidatePath("/courses");
+
+    return {
+      success: true,
+      message: "Lesson removed.",
+    };
+  } catch (err) {
+    console.error("[Delete Lesson Error]", err);
+    return { success: false, message: "Failed to remove lesson." };
+  }
+}
+
 
 export async function correctAttendanceAction(
   prevState: ActionResult | null,
@@ -346,6 +719,197 @@ export async function resendStudentSetupEmailAction(
   return {
     success: result.success,
     message: result.message,
+    studentCode: result.studentCode,
+    temporaryPassword: result.temporaryPassword,
+  };
+}
+
+export async function resetStudentCredentialsAction(
+  applicationId: string
+): Promise<{
+  success: boolean;
+  message: string;
+  studentCode?: string;
+  email?: string;
+  temporaryPassword?: string;
+}> {
+  const actor = await requireRole(["admin"]);
+  const { resetStudentCredentials } = await import("@/server/services/provisioningService");
+  const result = await resetStudentCredentials(applicationId, actor.userId);
+
+  return result;
+}
+
+export async function createInstructorAction(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  const rawData = {
+    fullName: formData.get("fullName")?.toString() || "",
+    email: formData.get("email")?.toString() || "",
+    title: formData.get("title")?.toString() || "",
+    bio: formData.get("bio")?.toString() || "",
+    specialties: formData.get("specialties")?.toString() || "",
+    avatarUrl: formData.get("avatarUrl")?.toString() || "",
+  };
+
+  const validation = createInstructorSchema.safeParse(rawData);
+  if (!validation.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of validation.error.issues) {
+      const path = issue.path[0]?.toString() || "form";
+      if (!errors[path]) errors[path] = [];
+      errors[path].push(issue.message);
+    }
+    return {
+      success: false,
+      message: "Please correct the errors in the instructor form.",
+      errors,
+    };
+  }
+
+  const specialtiesList = validation.data.specialties
+    ? validation.data.specialties
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+
+  const result = await createInstructor({
+    fullName: validation.data.fullName,
+    email: validation.data.email,
+    title: validation.data.title,
+    bio: validation.data.bio,
+    specialties: specialtiesList,
+    avatarUrl: validation.data.avatarUrl || null,
+  });
+
+  if (result.success) {
+    await logAuditEvent(
+      actor.userId,
+      "INSTRUCTOR_CREATED",
+      "INSTRUCTOR",
+      result.instructor?.id,
+      {
+        fullName: validation.data.fullName,
+        email: validation.data.email,
+      }
+    );
+    revalidatePath("/admin/instructors");
+    revalidatePath("/instructors");
+    revalidatePath("/");
+    return {
+      success: true,
+      message: "Faculty member added successfully.",
+    };
+  }
+
+  return {
+    success: false,
+    message: "Failed to create instructor.",
+  };
+}
+
+export async function updateInstructorAction(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+
+  const rawData = {
+    instructorId: formData.get("instructorId")?.toString() || "",
+    fullName: formData.get("fullName")?.toString() || "",
+    email: formData.get("email")?.toString() || "",
+    title: formData.get("title")?.toString() || "",
+    bio: formData.get("bio")?.toString() || "",
+    specialties: formData.get("specialties")?.toString() || "",
+    avatarUrl: formData.get("avatarUrl")?.toString() || "",
+  };
+
+  const validation = updateInstructorSchema.safeParse(rawData);
+  if (!validation.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of validation.error.issues) {
+      const path = issue.path[0]?.toString() || "form";
+      if (!errors[path]) errors[path] = [];
+      errors[path].push(issue.message);
+    }
+    return {
+      success: false,
+      message: "Please correct the errors in the instructor form.",
+      errors,
+    };
+  }
+
+  const specialtiesList = validation.data.specialties
+    ? validation.data.specialties
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+
+  const result = await updateInstructor({
+    id: validation.data.instructorId,
+    fullName: validation.data.fullName,
+    email: validation.data.email,
+    title: validation.data.title,
+    bio: validation.data.bio,
+    specialties: specialtiesList,
+    avatarUrl: validation.data.avatarUrl || null,
+  });
+
+  if (result.success) {
+    await logAuditEvent(
+      actor.userId,
+      "INSTRUCTOR_UPDATED",
+      "INSTRUCTOR",
+      validation.data.instructorId,
+      {
+        fullName: validation.data.fullName,
+      }
+    );
+    revalidatePath("/admin/instructors");
+    revalidatePath("/instructors");
+    revalidatePath("/");
+    return {
+      success: true,
+      message: "Faculty member updated successfully.",
+    };
+  }
+
+  return {
+    success: false,
+    message: "Failed to update instructor.",
+  };
+}
+
+export async function deleteInstructorAction(
+  instructorId: string
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+  const result = await deleteInstructor(instructorId);
+
+  if (result.success) {
+    await logAuditEvent(
+      actor.userId,
+      "INSTRUCTOR_DELETED",
+      "INSTRUCTOR",
+      instructorId
+    );
+    revalidatePath("/admin/instructors");
+    revalidatePath("/instructors");
+    revalidatePath("/");
+    return {
+      success: true,
+      message: "Faculty member removed from active roster.",
+    };
+  }
+
+  return {
+    success: false,
+    message: "Failed to remove faculty member.",
   };
 }
 

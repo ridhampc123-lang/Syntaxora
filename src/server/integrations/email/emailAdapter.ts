@@ -14,7 +14,7 @@ export interface SendEmailResult {
 }
 
 export function isEmailConfigured(): boolean {
-  const resendKey = process.env.RESEND_API_KEY;
+  const resendKey = process.env.RESEND_API_KEY || process.env.EMAIL_PROVIDER_API_KEY;
   const smtpHost = process.env.SMTP_HOST;
   return Boolean(
     (resendKey && !resendKey.includes("placeholder")) ||
@@ -23,18 +23,24 @@ export function isEmailConfigured(): boolean {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
-  const resendKey = process.env.RESEND_API_KEY;
+  const resendKey = process.env.RESEND_API_KEY || process.env.EMAIL_PROVIDER_API_KEY;
 
   if (!isEmailConfigured() || !resendKey) {
     // Honest unconfigured state per Section 11 of the specification
     return {
       delivered: false,
       provider: "unconfigured",
-      message: `Email provider not configured. Notification to ${params.to} logged in development runtime.`,
+      message: `Email provider not configured (RESEND_API_KEY is not set in .env.local). Notification to ${params.to} logged in development runtime.`,
     };
   }
 
   try {
+    let fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_FROM_ADDRESS || "Syntaxora Admissions <onboarding@resend.dev>";
+    // Resend requires verified domains. For public mail domains (e.g. @gmail.com) or default dev, fallback to Resend's verified test sender
+    if (/@(gmail|yahoo|outlook|hotmail)\.com/i.test(fromAddress) || !fromAddress.includes("@")) {
+      fromAddress = "Syntaxora Admissions <onboarding@resend.dev>";
+    }
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -42,7 +48,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "Syntaxora Admissions <admissions@syntaxora.com>",
+        from: fromAddress,
         to: params.to,
         subject: params.subject,
         html: params.html,
@@ -52,10 +58,17 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
 
     if (!res.ok) {
       const errBody = await res.text();
+      let hint = "";
+      if (errBody.includes("only send testing emails to your own email address")) {
+        hint = " [Resend Sandbox Restriction: On Resend free tier without a custom domain, emails can only be delivered to your registered Resend account email address. Add and verify a custom domain at resend.com/domains to send to any recipient.]";
+      } else if (errBody.includes("domain is not verified")) {
+        hint = " [Resend Domain Verification: Please use 'onboarding@resend.dev' as sender or verify your custom domain on https://resend.com/domains.]";
+      }
+      console.warn(`[Resend Email Error] Status ${res.status}: ${errBody}${hint}`);
       return {
         delivered: false,
         provider: "resend",
-        message: `Provider API rejected email dispatch: ${errBody}`,
+        message: `Provider API rejected email dispatch (${res.status}): ${errBody}${hint}`,
       };
     }
 
@@ -102,7 +115,8 @@ export function getGuardianInvitationEmail(studentName: string, invitationUrl: s
 export function getStudentAdmissionSetupEmail(
   studentName: string,
   studentCode: string,
-  setupUrl: string
+  setupUrl: string,
+  temporaryPassword = "StudentPassword123!"
 ): { subject: string; html: string; text: string } {
   return {
     subject: `Admission Approved: Set Up Your Syntaxora Student Account (${studentCode})`,
@@ -117,17 +131,24 @@ export function getStudentAdmissionSetupEmail(
           <div style="font-size: 20px; font-family: monospace; font-weight: bold; color: #3869AD; margin-top: 4px;">${studentCode}</div>
           <div style="font-size: 11px; color: #5F6F84; margin-top: 4px;">Share this code with your verified parents/guardians to enable portal monitoring.</div>
         </div>
+        <div style="background-color: #F8FAFC; border: 1px dashed #CBD5E1; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <div style="font-size: 11px; text-transform: uppercase; color: #475569; font-weight: bold; letter-spacing: 0.05em;">Your Temporary Sign-In Credentials</div>
+          <div style="font-size: 13px; color: #1E293B; margin-top: 6px;">
+            <div>Temporary Password: <strong style="font-family: monospace; background: #E2E8F0; padding: 2px 6px; border-radius: 4px;">${temporaryPassword}</strong></div>
+          </div>
+          <div style="font-size: 11px; color: #64748B; margin-top: 6px;">You can change your password at any time in your student dashboard settings.</div>
+        </div>
         <div style="margin: 24px 0;">
           <a href="${setupUrl}" style="background-color: #3869AD; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
-            Complete Account Setup & Access Portal
+            Sign In & Access Student Portal
           </a>
         </div>
         <p style="color: #5F6F84; font-size: 12px; line-height: 1.4;">
-          This secure setup link is expiring and single-use. If you need any assistance, reach out to admissions@syntaxora.com.
+          If you have any questions or need assistance, reach out to admissions@syntaxora.com.
         </p>
       </div>
     `,
-    text: `Congratulations ${studentName}! Your Syntaxora application has been approved. Your Student Code is: ${studentCode}. Click to set up your password: ${setupUrl}`,
+    text: `Congratulations ${studentName}! Your Syntaxora application has been approved. Your Student Code is: ${studentCode}. Temporary Password: ${temporaryPassword}. Sign in here: ${setupUrl}`,
   };
 }
 

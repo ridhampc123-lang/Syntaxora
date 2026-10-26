@@ -7,7 +7,6 @@ import {
   Layers,
   Users,
   ExternalLink,
-  CheckCircle,
 } from "lucide-react";
 import { getCourseById } from "@/server/services/courseService";
 import { getBatches } from "@/server/services/batchService";
@@ -15,6 +14,7 @@ import { getEnrollments } from "@/server/services/enrollmentService";
 import { getApprovedInstructors } from "@/server/services/instructorService";
 import { CoursePublishButton } from "@/components/forms/CoursePublishButton";
 import { CreateBatchModal } from "@/components/forms/CreateBatchModal";
+import { AdminCourseModulesManager } from "@/components/dashboards/admin/AdminCourseModulesManager";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -122,7 +122,7 @@ export default async function AdminCourseDetailPage({ params }: Props) {
         <div className="p-4 rounded-xl bg-white border border-[#DCE4EE] space-y-1">
           <div className="flex items-center justify-between text-xs font-semibold text-[#5F6F84] uppercase">
             <span>Tuition / Fee</span>
-            <span className="text-xs font-bold text-[#3869AD]">USD</span>
+            <span className="text-xs font-bold text-[#168B83]">INR (₹)</span>
           </div>
           <div className="text-2xl font-bold text-[#142541]">
             {course.price_in_cents > 0 ? formatCurrency(course.price_in_cents, course.currency) : "Free"}
@@ -216,52 +216,8 @@ export default async function AdminCourseDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Modules & Syllabus */}
-      <div className="rounded-xl border border-[#DCE4EE] bg-white p-6 shadow-sm space-y-4">
-        <div>
-          <h3 className="text-base font-bold text-[#142541]">Curriculum Modules & Lessons</h3>
-          <p className="text-xs text-[#5F6F84]">
-            Learning progression is tracked per lesson across authorized student enrollments.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {(!course.modules || course.modules.length === 0) ? (
-            <p className="text-xs text-[#5F6F84] italic">
-              No modules defined yet for this curriculum track.
-            </p>
-          ) : (
-            course.modules.map((mod, idx) => (
-              <div key={mod.id} className="rounded-xl border border-[#DCE4EE] bg-[#F3F6FA]/40 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="font-bold text-[#142541] text-xs">
-                    Module {idx + 1}: {mod.title}
-                  </div>
-                  <Badge variant="outline">{mod.lessons?.length || 0} Lessons</Badge>
-                </div>
-                {mod.description && (
-                  <p className="text-[11px] text-[#5F6F84]">{mod.description}</p>
-                )}
-
-                <div className="space-y-1.5 pl-3 border-l-2 border-[#3869AD]">
-                  {mod.lessons?.map((les) => (
-                    <div key={les.id} className="flex items-center justify-between text-xs py-1">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-3.5 w-3.5 text-[#168B83]" />
-                        <span className="font-medium text-[#263449]">{les.title}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-[#5F6F84]">
-                        <span className="capitalize">{les.lesson_type}</span>
-                        {les.is_preview && <Badge variant="teal">Free Preview</Badge>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      {/* Dynamic Curriculum Topics & Syllabus Manager */}
+      <AdminCourseModulesManager course={course} />
     </div>
   );
 }

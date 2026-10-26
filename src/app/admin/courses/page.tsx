@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { ExternalLink, PlusCircle } from "lucide-react";
-import { getPublishedCourses } from "@/server/services/courseService";
+import { getAllCourses } from "@/server/services/courseService";
 import { CreateCourseForm } from "@/components/forms/CreateCourseForm";
 import { CoursePublishButton } from "@/components/forms/CoursePublishButton";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ export const metadata = {
 };
 
 export default async function AdminCoursesPage() {
-  const courses = await getPublishedCourses();
+  const courses = await getAllCourses();
 
   return (
     <div className="space-y-8">
@@ -52,6 +52,7 @@ export default async function AdminCoursesPage() {
                   <th className="p-3.5">Course Title</th>
                   <th className="p-3.5">Track / Audience</th>
                   <th className="p-3.5">Level</th>
+                  <th className="p-3.5">Topics</th>
                   <th className="p-3.5">Tuition</th>
                   <th className="p-3.5">Status</th>
                   <th className="p-3.5 text-right">Actions</th>
@@ -82,6 +83,11 @@ export default async function AdminCoursesPage() {
                     <td className="p-3.5">
                       <Badge variant="outline">{course.level}</Badge>
                     </td>
+                    <td className="p-3.5">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#E8EFF8] text-[#3869AD] text-[11px] font-bold">
+                        {course.modules?.length || 0} Topics
+                      </span>
+                    </td>
                     <td className="p-3.5 font-semibold text-[#142541]">
                       {course.price_in_cents > 0
                         ? formatCurrency(course.price_in_cents, course.currency)
@@ -97,7 +103,7 @@ export default async function AdminCoursesPage() {
                         href={`/admin/courses/${course.id}`}
                         className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#E8EFF8] text-[#3869AD] hover:bg-[#3869AD] hover:text-white text-xs font-semibold transition-colors"
                       >
-                        Manage
+                        Manage & Topics
                       </Link>
                       <CoursePublishButton
                         courseId={course.id}

@@ -24,72 +24,92 @@ export default async function ApplyPage({ searchParams }: Props) {
     typeof resolvedParams.course === "string" ? resolvedParams.course : undefined;
 
   return (
-    <div className="min-h-screen bg-[#F3F6FA] py-12 sm:py-16">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Header Breadcrumbs / Intro */}
-        <div className="space-y-3 text-center sm:text-left">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8EFF8] text-[#3869AD] text-xs font-semibold">
+    <div className="min-h-screen bg-[#FAF8F3] py-12 lg:py-18 text-[#354052]">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="text-xs text-[#687386]">
+          <ol className="flex items-center gap-1.5">
+            <li>
+              <Link href="/" className="hover:text-[#17243A]">
+                Home
+              </Link>
+            </li>
+            <li>/</li>
+            <li className="font-semibold text-[#17243A]">Admission Application</li>
+          </ol>
+        </nav>
+
+        {/* Header Intro */}
+        <div className="space-y-3 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAF0F8] border border-[#355F99]/20 text-xs font-semibold text-[#355F99]">
             <GraduationCap className="h-4 w-4" aria-hidden="true" />
-            <span>Admissions & Cohort Registration</span>
+            <span>Admissions & Cohort Allocation</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#142541] tracking-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
             Apply to Syntaxora AI Academy
           </h1>
 
-          <p className="text-sm text-[#5F6F84] max-w-2xl leading-relaxed">
-            Join a selective cohort of young innovators, university researchers, and professionals mastering real artificial intelligence, computer vision, and neural engineering.
+          <p className="text-base text-[#687386] max-w-2xl leading-relaxed font-normal">
+            Join a selective cohort of young innovators, high-school roboticists, university researchers, or working professionals mastering real artificial intelligence and neural systems.
           </p>
         </div>
 
-        {/* Form Card */}
-        <div className="rounded-2xl border border-[#DCE4EE] bg-white p-6 sm:p-10 shadow-sm">
+        {/* Admissions Form Card */}
+        <div className="rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-10 shadow-sm animate-fade-in-up animation-delay-75 card-editorial">
           <StudentApplicationForm
             courses={courses}
             initialCourseId={initialCourseId}
           />
         </div>
 
-        {/* Admissions Process Walkthrough */}
-        <div className="rounded-2xl border border-[#DCE4EE] bg-white p-6 sm:p-8 space-y-4 shadow-sm">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#142541]">
+        {/* Process Walkthrough Reassurance */}
+        <div className="rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-8 space-y-5 shadow-sm animate-fade-in-up animation-delay-150 card-editorial">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#355F99]">
+            Admissions Timeline
+          </span>
+          <h2 className="text-lg font-bold text-[#17243A]">
             How Syntaxora Admissions Works
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-[#5F6F84]">
-            <div className="p-3 rounded-lg bg-[#F3F6FA] border border-[#DCE4EE] space-y-1">
-              <div className="font-bold text-[#142541] flex items-center gap-1.5">
-                <span className="h-5 w-5 rounded-full bg-[#3869AD] text-white flex items-center justify-center text-[10px]">1</span>
-                <span>Submit Application</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-[#687386]">
+            <div className="p-4 rounded-xl bg-[#FAF8F3] border border-[#DDE2E7] space-y-1.5">
+              <div className="font-bold text-[#17243A] flex items-center gap-1.5">
+                <span className="h-5 w-5 rounded-full bg-[#355F99] text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                <span>Submit Form</span>
               </div>
-              <p>Fill out the application form with background details and preferred learning track.</p>
+              <p className="leading-relaxed">Share learner background details and select a preferred cohort track.</p>
             </div>
-            <div className="p-3 rounded-lg bg-[#F3F6FA] border border-[#DCE4EE] space-y-1">
-              <div className="font-bold text-[#142541] flex items-center gap-1.5">
-                <span className="h-5 w-5 rounded-full bg-[#168B83] text-white flex items-center justify-center text-[10px]">2</span>
+            <div className="p-4 rounded-xl bg-[#FAF8F3] border border-[#DDE2E7] space-y-1.5">
+              <div className="font-bold text-[#17243A] flex items-center gap-1.5">
+                <span className="h-5 w-5 rounded-full bg-[#167F78] text-white flex items-center justify-center text-[10px] font-bold">2</span>
                 <span>Faculty Review</span>
               </div>
-              <p>Admissions coordinators review background and match you to an optimal live class cohort.</p>
+              <p className="leading-relaxed">Admissions coordinators verify readiness and match you to a live cohort.</p>
             </div>
-            <div className="p-3 rounded-lg bg-[#F3F6FA] border border-[#DCE4EE] space-y-1">
-              <div className="font-bold text-[#142541] flex items-center gap-1.5">
-                <span className="h-5 w-5 rounded-full bg-[#142541] text-white flex items-center justify-center text-[10px]">3</span>
-                <span>Secure Provisioning</span>
+            <div className="p-4 rounded-xl bg-[#FAF8F3] border border-[#DDE2E7] space-y-1.5">
+              <div className="font-bold text-[#17243A] flex items-center gap-1.5">
+                <span className="h-5 w-5 rounded-full bg-[#17243A] text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                <span>Account Setup</span>
               </div>
-              <p>Upon approval, you receive your unique student code and account setup invitation by email.</p>
+              <p className="leading-relaxed">Upon approval, receive your unique student code and portal password setup link.</p>
             </div>
           </div>
         </div>
 
-        {/* Parent / Guardian Registration Note */}
-        <div className="text-center text-xs text-[#5F6F84] pt-2">
-          Are you a parent or legal guardian looking to monitor your enrolled student?{" "}
-          <Link href="/sign-up?role=parent" className="font-semibold text-[#3869AD] hover:underline">
-            Register a Parent Account here
-          </Link>
-          {" "}or{" "}
-          <Link href="/login" className="font-semibold text-[#3869AD] hover:underline">
-            Sign In to the Portal
-          </Link>
+        {/* Parent / Guardian Registration Footnote */}
+        <div className="text-center text-xs text-[#687386] pt-2 pb-6 space-y-1">
+          <div>
+            Are you a parent or legal guardian looking to oversee an enrolled learner?{" "}
+            <Link href="/sign-up?role=parent" className="font-semibold text-[#167F78] hover:underline">
+              Register a Parent Account here
+            </Link>
+          </div>
+          <div>
+            Already have an active account?{" "}
+            <Link href="/login" className="font-semibold text-[#355F99] hover:underline">
+              Portal Sign In
+            </Link>
+          </div>
         </div>
       </div>
     </div>

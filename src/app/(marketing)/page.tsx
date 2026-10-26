@@ -2,30 +2,30 @@ import React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Code2,
   Cpu,
-  Brain,
   Video,
-  CheckCircle2,
-  Sparkles,
-  Users,
+  ShieldCheck,
+  Terminal,
+  BookOpen,
   Compass,
   Laptop,
   GraduationCap,
-  Layers,
-  Calendar,
+  Sparkles,
+  ChevronRight,
+  Check,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getPublishedCourses } from "@/server/services/courseService";
 import { getApprovedInstructors } from "@/server/services/instructorService";
 import { formatCurrency } from "@/lib/utils";
+import { Reveal } from "@/components/ui/reveal";
 
 export const metadata = {
-  title: "Syntaxora — AI Learning Academy | Practical Artificial Intelligence for All Ages",
+  title: "Syntaxora — AI Learning Academy | Applied Artificial Intelligence for All Ages",
   description:
-    "Master machine learning, robotics, computer vision, and neural networks through live interactive cohorts for kids, teens, university students, and adults.",
+    "An editorial, rigorous online academy teaching machine learning, robotics, computer vision, and neural architectures to children, teenagers, university students, and professionals.",
 };
 
 export default async function HomePage() {
@@ -35,99 +35,171 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#142541] via-[#1b3154] to-[#142541] text-white py-20 lg:py-28">
-        <div className="absolute inset-0 bg-[radial-gradient(#3869AD_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center lg:text-left">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-medium text-[#E8EFF8] backdrop-blur-sm">
-                <Sparkles className="h-3.5 w-3.5 text-[#168B83]" aria-hidden="true" />
-                <span>Next Cohorts Open for Spring & Summer Enrollment</span>
+    <div className="flex flex-col min-h-screen bg-[#FAF8F3] text-[#354052]">
+      {/* =========================================================================
+          1. HERO SECTION — Editorial Composition
+          ========================================================================= */}
+      <section className="relative pt-12 pb-20 lg:pt-16 lg:pb-28 border-b border-[#DDE2E7] overflow-hidden">
+        {/* Soft background grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(#17243A 1px, transparent 1px)`,
+            backgroundSize: "28px 28px",
+          }}
+          aria-hidden="true"
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+            {/* Left Column: Editorial Headline & Actions */}
+            <div className="lg:col-span-7 space-y-6 text-left animate-fade-in-up">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full badge-ai-gradient text-xs font-semibold text-[#17243A] transition-all">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D34BE9] animate-pulse-dot" />
+                <span>Now Enrolling Spring & Summer 2026 • <span className="text-gradient-ai font-bold">Live AI Cohorts</span></span>
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
-                Practical AI Education. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3869AD] via-[#60A5FA] to-[#168B83]">
-                  Built for Every Generation.
-                </span>
-              </h1>
-              <p className="text-lg sm:text-xl text-[#DCE4EE]/90 max-w-2xl leading-relaxed">
-                From playful computational logic for kids to transformer engineering for college graduates and professionals. Live instructor-led cohorts, real projects, and verified skill mastery.
-              </p>
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Link href="/courses">
+
+              <div className="space-y-3">
+                <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold tracking-tight text-[#17243A] leading-[1.12]">
+                  Where <span className="text-gradient-ai">Artificial Intelligence</span> is taught as an{" "}
+                  <span className="font-display italic font-normal text-[#355F99]">
+                    applied engineering craft
+                  </span>
+                  .
+                </h1>
+                <p className="text-base sm:text-lg text-[#687386] leading-relaxed max-w-2xl font-normal">
+                  Syntaxora teaches genuine computer vision, robotics, and deep neural architectures through small, instructor-led cohorts. From visual algorithmic foundations for young minds to production transformers for engineers.
+                </p>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
+                <Link href="/apply">
                   <Button variant="primary" size="lg" className="w-full sm:w-auto font-semibold">
-                    Explore Courses
-                    <ArrowRight className="h-5 w-5 ml-2" aria-hidden="true" />
+                    Apply for Admission
+                    <ArrowRight className="h-4 w-4 ml-2 arrow-icon" aria-hidden="true" />
                   </Button>
                 </Link>
-                <Link href="#how-it-works">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <Link href="/courses">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                    Explore All Courses
+                  </Button>
+                </Link>
+                <Link href="/how-it-works">
+                  <Button variant="ghost" size="lg" className="w-full sm:w-auto text-[#17243A] font-medium">
                     How Learning Works
                   </Button>
                 </Link>
               </div>
 
-              {/* Verified Trust Flags (No fake counts or ratings) */}
-              <div className="pt-6 border-t border-white/10 grid grid-cols-3 gap-4 text-left">
-                <div>
-                  <div className="text-xs uppercase font-semibold text-[#DCE4EE]/60 tracking-wider">
+              {/* Verified Trust Strip */}
+              <div className="pt-8 border-t border-[#DDE2E7] grid grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#687386]">
+                    Cohort Size
+                  </div>
+                  <div className="text-sm font-bold text-[#17243A] flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-[#355F99]" aria-hidden="true" />
+                    <span>8–14 Students</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#687386]">
                     Format
                   </div>
-                  <div className="text-sm font-medium text-white flex items-center gap-1.5 mt-0.5">
-                    <Video className="h-4 w-4 text-[#168B83]" aria-hidden="true" />
-                    Live & Interactive
+                  <div className="text-sm font-bold text-[#17243A] flex items-center gap-1.5">
+                    <Video className="h-4 w-4 text-[#167F78]" aria-hidden="true" />
+                    <span>Live Interactive</span>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs uppercase font-semibold text-[#DCE4EE]/60 tracking-wider">
-                    Curriculum
+
+                <div className="space-y-1">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#687386]">
+                    Privacy Standard
                   </div>
-                  <div className="text-sm font-medium text-white flex items-center gap-1.5 mt-0.5">
-                    <Code2 className="h-4 w-4 text-[#3869AD]" aria-hidden="true" />
-                    100% Project-Based
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs uppercase font-semibold text-[#DCE4EE]/60 tracking-wider">
-                    Privacy
-                  </div>
-                  <div className="text-sm font-medium text-white flex items-center gap-1.5 mt-0.5">
-                    <CheckCircle2 className="h-4 w-4 text-[#168B83]" aria-hidden="true" />
-                    Verified Guardians
+                  <div className="text-sm font-bold text-[#17243A] flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-[#17243A]" aria-hidden="true" />
+                    <span>Guardian Verified</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Hero Interactive Showcase Card */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 shadow-2xl text-left">
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            {/* Right Column: Educational Artifact Composition */}
+            <div className="lg:col-span-5 animate-fade-in-up animation-delay-150">
+              <div className="rounded-2xl border border-[#DDE2E7] bg-white p-5 sm:p-7 shadow-[0_8px_30px_rgba(23,36,58,0.06)] space-y-5 card-editorial">
+                {/* Simulated Interactive Code Studio */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#DDE2E7]">
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                    <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-                    <div className="h-3 w-3 rounded-full bg-green-500/80" />
+                    <div className="flex gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#E57373]" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#FFB74D]" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#81C784]" />
+                    </div>
+                    <span className="text-xs font-mono text-[#687386] ml-2">
+                      vision_classifier.py
+                    </span>
                   </div>
-                  <span className="text-xs font-mono text-[#DCE4EE]/60">syntaxora-ai/model.py</span>
+                  <Badge variant="teal" className="text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#167F78] animate-pulse-dot" />
+                    <span>Live <span className="text-gradient-ai font-extrabold">AI</span> Studio Active</span>
+                  </Badge>
                 </div>
-                <div className="mt-4 font-mono text-xs text-[#DCE4EE]/90 space-y-2">
-                  <p className="text-[#60A5FA]"># Live student cohort project</p>
-                  <p><span className="text-[#F472B6]">import</span> torch</p>
-                  <p><span className="text-[#F472B6]">import</span> cv2</p>
-                  <p className="text-[#9CA3AF]"># Detect objects in camera stream</p>
-                  <p><span className="text-[#FBBF24]">detector</span> = VisionClassifier(classes=[<span className="text-[#34D399]">&quot;robot&quot;</span>, <span className="text-[#34D399]">&quot;marker&quot;</span>])</p>
-                  <p><span className="text-[#60A5FA]">prediction</span> = detector.infer(frame)</p>
-                  <div className="mt-4 p-3 rounded-lg bg-[#142541]/80 border border-[#168B83]/30">
-                    <div className="flex items-center justify-between text-[11px] text-[#168B83]">
-                      <span>Inference Status: Active</span>
-                      <span>Latency: 14ms</span>
-                    </div>
-                    <div className="mt-1 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#168B83] w-4/5 rounded-full" />
-                    </div>
+
+                {/* Annotated Code Block */}
+                <div className="bg-[#17243A] text-white p-4 rounded-xl font-mono text-xs leading-relaxed overflow-x-auto shadow-inner">
+                  <div className="text-[#687386]"># Syntaxora Vision Lab: Real-time edge detection</div>
+                  <div className="mt-1">
+                    <span className="text-[#D7A66A]">import</span> torch
                   </div>
+                  <div>
+                    <span className="text-[#D7A66A]">import</span> cv2
+                  </div>
+                  <div className="mt-2 text-[#90CAF9]">
+                    model = torch.hub.load(<span className="text-[#A5D6A7]">&apos;syntaxora/edge-net&apos;</span>)
+                  </div>
+                  <div className="text-[#E0E0E0]">
+                    stream = cv2.VideoCapture(device_id=0)
+                  </div>
+                  <div className="mt-2 text-[#D7A66A]">while</div>
+                  <div className="pl-4 text-[#E0E0E0]">
+                    frame = stream.read()
+                  </div>
+                  <div className="pl-4 text-[#A5D6A7]">
+                    boxes, confidence = model.predict(frame)
+                  </div>
+                  <div className="mt-2 text-[#90CAF9] flex items-center">
+                    <span className="text-[#D7A66A] mr-1.5">&gt;</span>
+                    <span className="text-[#A5D6A7]">tensor(128, 128, 3) initialized</span>
+                    <span className="inline-block w-1.5 h-3.5 bg-[#D7A66A] ml-1.5 animate-cursor" />
+                  </div>
+                </div>
+
+                {/* Annotation Note */}
+                <div className="bg-[#FAF8F3] border border-[#DDE2E7] rounded-xl p-3.5 flex items-start gap-3">
+                  <div className="h-6 w-6 rounded bg-[#EAF0F8] text-[#355F99] flex items-center justify-center shrink-0 mt-0.5">
+                    <Terminal className="h-3.5 w-3.5" aria-hidden="true" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-[#17243A]">
+                      Instructor Live Review
+                    </div>
+                    <p className="text-xs text-[#687386] leading-snug">
+                      Students run and debug code on their local environment during every live cohort session.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Course Cohort Indicator */}
+                <div className="flex items-center justify-between text-xs pt-2 text-[#687386]">
+                  <span>Track: Teens Robotics (Ages 12–17)</span>
+                  <Link
+                    href="/courses/applied-ai-for-teens"
+                    className="text-[#355F99] font-semibold hover:underline inline-flex items-center gap-1"
+                  >
+                    View Syllabus
+                    <ChevronRight className="h-3 w-3" aria-hidden="true" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -135,439 +207,574 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Learning Paths by Age Group */}
-      <section className="py-20 bg-white border-b border-[#DCE4EE]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#3869AD]">
-              Age-Tailored Curricula
-            </h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-[#142541]">
-              Engineered for Every Stage of Cognitive Growth
-            </h3>
-            <p className="text-base text-[#5F6F84]">
-              We do not treat a 9-year-old explorer like a university student. Our 4 specialized tracks adapt pedagogical style, tooling, and math depth.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Young Learners */}
-            <Card className="hover:shadow-md transition-shadow border-t-4 border-t-[#168B83]">
-              <CardHeader className="space-y-2">
-                <div className="h-10 w-10 rounded-lg bg-[#E2F4F2] text-[#168B83] flex items-center justify-center">
-                  <Compass className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <CardTitle className="text-lg">Young Learners</CardTitle>
-                <div className="text-xs font-semibold text-[#168B83]">Ages 7 – 11</div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-[#5F6F84]">
-                <p>
-                  Visual block programming, sensor interaction, and playful logic puzzles exploring how computers see and hear.
+      {/* =========================================================================
+          2. LEARNING PATHWAYS — Distinct Editorial Architecture
+          ========================================================================= */}
+      <section className="py-18 lg:py-24 border-b border-[#DDE2E7]">
+        <Reveal>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {/* Section Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#DDE2E7]">
+              <div className="space-y-2 max-w-2xl">
+                <span className="text-xs font-bold uppercase tracking-wider text-gradient-ai">
+                  Distinct Age-Specific AI Curricula
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
+                  Structured for cognitive readiness.
+                </h2>
+                <p className="text-base text-[#687386]">
+                  Children learn differently from undergraduates. Each pathway features custom pedagogical tooling, real-world projects, and strict age-appropriate safety.
                 </p>
-                <ul className="space-y-1.5 text-xs text-[#263449]">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#168B83]" aria-hidden="true" />
-                    Visual Pattern Recognition
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#168B83]" aria-hidden="true" />
-                    Block-Based Algorithm Logic
-                  </li>
-                </ul>
-                <Link href="/courses?audience=young_learners" className="inline-block text-xs font-semibold text-[#3869AD] hover:underline">
-                  View Track Courses →
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Teens */}
-            <Card className="hover:shadow-md transition-shadow border-t-4 border-t-[#3869AD]">
-              <CardHeader className="space-y-2">
-                <div className="h-10 w-10 rounded-lg bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center">
-                  <Laptop className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <CardTitle className="text-lg">Teens & High School</CardTitle>
-                <div className="text-xs font-semibold text-[#3869AD]">Ages 12 – 17</div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-[#5F6F84]">
-                <p>
-                  Transitioning to real Python syntax, computer vision with OpenCV, and building interactive robotics algorithms.
-                </p>
-                <ul className="space-y-1.5 text-xs text-[#263449]">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#3869AD]" aria-hidden="true" />
-                    Python Syntax & Data Structures
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#3869AD]" aria-hidden="true" />
-                    Camera Computer Vision
-                  </li>
-                </ul>
-                <Link href="/courses?audience=teens" className="inline-block text-xs font-semibold text-[#3869AD] hover:underline">
-                  View Track Courses →
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* College Students */}
-            <Card className="hover:shadow-md transition-shadow border-t-4 border-t-[#142541]">
-              <CardHeader className="space-y-2">
-                <div className="h-10 w-10 rounded-lg bg-[#F3F6FA] text-[#142541] flex items-center justify-center">
-                  <GraduationCap className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <CardTitle className="text-lg">College & University</CardTitle>
-                <div className="text-xs font-semibold text-[#142541]">Undergrad & Postgrad</div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-[#5F6F84]">
-                <p>
-                  Mathematical foundations of deep learning, PyTorch implementation, neural loss surfaces, and transformers.
-                </p>
-                <ul className="space-y-1.5 text-xs text-[#263449]">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#142541]" aria-hidden="true" />
-                    PyTorch Tensor Architectures
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#142541]" aria-hidden="true" />
-                    Attention & Transformer Models
-                  </li>
-                </ul>
-                <Link href="/courses?audience=college_students" className="inline-block text-xs font-semibold text-[#3869AD] hover:underline">
-                  View Track Courses →
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Adults */}
-            <Card className="hover:shadow-md transition-shadow border-t-4 border-t-[#263449]">
-              <CardHeader className="space-y-2">
-                <div className="h-10 w-10 rounded-lg bg-[#F3F6FA] text-[#263449] flex items-center justify-center">
-                  <Cpu className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <CardTitle className="text-lg">Adults & Professionals</CardTitle>
-                <div className="text-xs font-semibold text-[#263449]">Workplace Upskilling</div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-[#5F6F84]">
-                <p>
-                  Generative AI systems, prompt architecture, Retrieval-Augmented Generation (RAG), and enterprise vector stores.
-                </p>
-                <ul className="space-y-1.5 text-xs text-[#263449]">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#263449]" aria-hidden="true" />
-                    Vector Databases & Semantic Search
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#263449]" aria-hidden="true" />
-                    Enterprise RAG Engineering
-                  </li>
-                </ul>
-                <Link href="/courses?audience=adults" className="inline-block text-xs font-semibold text-[#3869AD] hover:underline">
-                  View Track Courses →
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Real Course Highlights from Database */}
-      <section className="py-20 bg-[#F3F6FA] border-b border-[#DCE4EE]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#3869AD]">
-                Featured Courses
-              </h2>
-              <h3 className="text-3xl font-extrabold text-[#142541]">
-                Active Learning Cohorts
-              </h3>
+              </div>
+              <Link href="/programs">
+                <Button variant="outline" size="sm" className="shrink-0 font-medium">
+                  Compare All 4 Tracks
+                  <ArrowRight className="h-3.5 w-3.5 ml-1.5 arrow-icon" aria-hidden="true" />
+                </Button>
+              </Link>
             </div>
-            <Link href="/courses">
-              <Button variant="outline" size="sm">
-                View All Courses ({courses.length})
-              </Button>
-            </Link>
-          </div>
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.slice(0, 3).map((course) => (
-              <Card key={course.id} className="flex flex-col justify-between hover:shadow-lg transition-all border-[#DCE4EE]">
-                <div>
-                  <CardHeader className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Badge variant={course.level === "beginner" ? "teal" : course.level === "advanced" ? "navy" : "primary"}>
-                        {course.level}
-                      </Badge>
-                      <span className="text-xs text-[#5F6F84] font-medium">
-                        {course.duration_weeks} Weeks
-                      </span>
+            {/* Asymmetrical 4 Pathways Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* Pathway 1: Young Learners (Ages 7–11) */}
+              <div className="lg:col-span-6 rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-9 space-y-6 flex flex-col justify-between card-editorial card-ai-glow group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="h-11 w-11 rounded-xl bg-[#E7F5F4] text-[#167F78] flex items-center justify-center transition-transform group-hover:scale-105 duration-200">
+                      <Compass className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <CardTitle className="text-xl text-[#142541]">
-                      {course.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-[#5F6F84] leading-relaxed line-clamp-3">
-                      {course.summary}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-[#263449] pt-2 border-t border-[#DCE4EE]">
-                      <span className="flex items-center gap-1">
-                        <Video className="h-3.5 w-3.5 text-[#168B83]" aria-hidden="true" />
-                        {course.delivery_mode.replace("_", " ")}
-                      </span>
-                      <span className="flex items-center gap-1 capitalize">
-                        <Users className="h-3.5 w-3.5 text-[#3869AD]" aria-hidden="true" />
-                        {course.audience_group.replace("_", " ")}
-                      </span>
-                    </div>
-                  </CardContent>
-                </div>
-                <div className="p-6 pt-0 flex items-center justify-between border-t border-[#DCE4EE]/60 mt-4">
-                  <div className="text-lg font-bold text-[#142541]">
-                    {course.price_in_cents > 0 ? formatCurrency(course.price_in_cents, course.currency) : "Free"}
+                    <Badge variant="teal">Ages 7–11</Badge>
                   </div>
-                  <Link href={`/courses/${course.slug}`}>
-                    <Button variant="primary" size="sm">
-                      Course Syllabus
+                  <div>
+                    <h3 className="text-2xl font-bold text-[#17243A]">
+                      Young <span className="text-gradient-ai">AI</span> Explorers
+                    </h3>
+                    <p className="text-xs font-semibold text-[#167F78] mt-0.5">
+                      Visual Logic, Algorithms & Creative Coding
+                    </p>
+                  </div>
+                  <p className="text-sm text-[#687386] leading-relaxed">
+                    A playful, visual entry into how machines comprehend the world. Students build pattern classifiers, solve algorithmic logic puzzles, and learn that software learns from examples.
+                  </p>
+                  <div className="pt-2 border-t border-[#DDE2E7] space-y-2 text-xs text-[#354052]">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#167F78] shrink-0" aria-hidden="true" />
+                      <span>Doodle recognition & image classifiers</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#167F78] shrink-0" aria-hidden="true" />
+                      <span>Interactive sensors & audio pattern puzzles</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#167F78] shrink-0" aria-hidden="true" />
+                      <span>Parent visibility on class attendance & activities</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Link href="/courses/young-ai-explorers" className="block">
+                    <Button variant="outline" size="sm" className="w-full justify-between">
+                      <span>Explore Young Explorers Syllabus</span>
+                      <ArrowRight className="h-4 w-4 ml-1 text-[#167F78] arrow-icon" aria-hidden="true" />
                     </Button>
                   </Link>
                 </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 4. What You Will Build (Project Section) */}
-      <section className="py-20 bg-white border-b border-[#DCE4EE]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#168B83]">
-              Applied Engineering
-            </h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-[#142541]">
-              What You Will Actually Build
-            </h3>
-            <p className="text-base text-[#5F6F84]">
-              Syntaxora students do not passively consume video lectures. Every student completes real portfolio projects reviewed by instructors.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-6 rounded-xl border border-[#DCE4EE] bg-[#F3F6FA] space-y-4">
-              <div className="h-10 w-10 rounded-lg bg-[#3869AD] text-white flex items-center justify-center">
-                <Brain className="h-5 w-5" aria-hidden="true" />
               </div>
-              <h4 className="text-lg font-bold text-[#142541]">Autonomous Vision Rover Controller</h4>
-              <p className="text-sm text-[#5F6F84] leading-relaxed">
-                Build a computer vision system that tracks physical lane markers and maneuvers a simulated robotic chassis using edge Python algorithms.
-              </p>
-              <div className="text-xs font-semibold text-[#3869AD]">Stack: Python, OpenCV, NumPy</div>
-            </div>
 
-            <div className="p-6 rounded-xl border border-[#DCE4EE] bg-[#F3F6FA] space-y-4">
-              <div className="h-10 w-10 rounded-lg bg-[#168B83] text-white flex items-center justify-center">
-                <Layers className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <h4 className="text-lg font-bold text-[#142541]">Custom Neural Network From Scratch</h4>
-              <p className="text-sm text-[#5F6F84] leading-relaxed">
-                Write a multi-layer perceptron with custom forward and backward passes, calculating gradients and cross-entropy loss without external ML libraries.
-              </p>
-              <div className="text-xs font-semibold text-[#168B83]">Stack: PyTorch, Pure Math, Tensor Math</div>
-            </div>
-
-            <div className="p-6 rounded-xl border border-[#DCE4EE] bg-[#F3F6FA] space-y-4">
-              <div className="h-10 w-10 rounded-lg bg-[#142541] text-white flex items-center justify-center">
-                <Cpu className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <h4 className="text-lg font-bold text-[#142541]">Knowledge-Base RAG Assistant</h4>
-              <p className="text-sm text-[#5F6F84] leading-relaxed">
-                Build a production-grade question-answering system using vector embeddings, hybrid semantic search, and prompt containment for enterprise documents.
-              </p>
-              <div className="text-xs font-semibold text-[#142541]">Stack: Vector Embeddings, PostgreSQL, LLMs</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. How Learning Works: Methodology */}
-      <section id="how-it-works" className="py-20 bg-[#F3F6FA] border-b border-[#DCE4EE]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#3869AD]">
-              Our Pedagogy
-            </h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-[#142541]">
-              How Learning Works at Syntaxora
-            </h3>
-            <p className="text-base text-[#5F6F84]">
-              A disciplined, supportive 5-step feedback loop ensures concept mastery.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-5 gap-4">
-            {[
-              { step: "01", title: "Enroll", desc: "Select the age-appropriate cohort and secure your seat with verified guardian or student setup." },
-              { step: "02", title: "Attend Live", desc: "Participate in real-time instructor sessions with live coding walkthroughs and Q&A." },
-              { step: "03", title: "Hands-on Lab", desc: "Implement challenges in local lab environments with progressive automated checks." },
-              { step: "04", title: "Build Projects", desc: "Synthesize concepts by engineering standalone AI systems from scratch." },
-              { step: "05", title: "Expert Review", desc: "Receive individual feedback and code reviews from faculty before grades are released." },
-            ].map((item) => (
-              <div key={item.step} className="p-6 rounded-xl bg-white border border-[#DCE4EE] space-y-2 relative">
-                <span className="text-2xl font-extrabold text-[#3869AD]/30">{item.step}</span>
-                <h4 className="text-base font-bold text-[#142541]">{item.title}</h4>
-                <p className="text-xs text-[#5F6F84] leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Live vs. Recorded Learning Explainer */}
-          <div className="mt-12 p-8 rounded-2xl bg-white border border-[#DCE4EE] grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#168B83] uppercase tracking-wider">
-                <Calendar className="h-4 w-4" aria-hidden="true" />
-                Live Interactive Sessions
-              </div>
-              <h4 className="text-xl font-bold text-[#142541]">Scheduled Cohort Sessions</h4>
-              <p className="text-sm text-[#5F6F84] leading-relaxed">
-                Small group sizes enable instructors to monitor student code in real time, troubleshoot bugs on the spot, and foster active team collaboration. Attendance is formally tracked and visible to parents in the Guardian Portal.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3869AD] uppercase tracking-wider">
-                <Video className="h-4 w-4" aria-hidden="true" />
-                Private Lesson Archive
-              </div>
-              <h4 className="text-xl font-bold text-[#142541]">Recorded Review & Async Practice</h4>
-              <p className="text-sm text-[#5F6F84] leading-relaxed">
-                Enrolled students retain access to authenticated lesson archives and exercise modules to reinforce difficult algorithmic concepts at their own pace, with progress verified at each checkpoint.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. Approved Faculty Section */}
-      <section className="py-20 bg-white border-b border-[#DCE4EE]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#3869AD]">
-              Expert Mentors
-            </h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-[#142541]">
-              Approved Academy Faculty
-            </h3>
-            <p className="text-base text-[#5F6F84]">
-              Real educators and practitioners with academic credentials and industry experience.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-            {instructors.map((instructor) => (
-              <Card key={instructor.id} className="border-[#DCE4EE]">
-                <CardHeader className="space-y-2">
-                  <div className="h-12 w-12 rounded-full bg-[#142541] text-white flex items-center justify-center font-bold text-lg">
-                    {instructor.full_name.charAt(0)}
-                  </div>
-                  <CardTitle className="text-lg text-[#142541]">
-                    {instructor.full_name}
-                  </CardTitle>
-                  <p className="text-xs font-semibold text-[#3869AD]">
-                    {(instructor as { title?: string }).title || "Academy Faculty"}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-xs text-[#5F6F84] leading-relaxed">
-                    {instructor.bio}
-                  </p>
-                  {(instructor as { specialties?: string[] }).specialties && (
-                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#DCE4EE]">
-                      {(instructor as { specialties: string[] }).specialties.map((spec) => (
-                        <span key={spec} className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#F3F6FA] text-[#263449]">
-                          {spec}
-                        </span>
-                      ))}
+              {/* Pathway 2: Teens & Robotics (Ages 12–17) */}
+              <div className="lg:col-span-6 rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-9 space-y-6 flex flex-col justify-between card-editorial card-ai-glow group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="h-11 w-11 rounded-xl bg-[#EAF0F8] text-[#355F99] flex items-center justify-center transition-transform group-hover:scale-105 duration-200">
+                      <Laptop className="h-5 w-5" aria-hidden="true" />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    <Badge variant="primary">Ages 12–17</Badge>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-[#17243A]">
+                      Teens Python & <span className="text-gradient-ai">AI</span> Robotics
+                    </h3>
+                    <p className="text-xs font-semibold text-[#355F99] mt-0.5">
+                      Computer Vision, OpenCV & Neural Nets
+                    </p>
+                  </div>
+                  <p className="text-sm text-[#687386] leading-relaxed">
+                    Moving past drag-and-drop into real Python engineering. Teenagers write clean syntax, interact with live webcam video streams via OpenCV, and train models to classify objects in real time.
+                  </p>
+                  <div className="pt-2 border-t border-[#DDE2E7] space-y-2 text-xs text-[#354052]">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#355F99] shrink-0" aria-hidden="true" />
+                      <span>Python lists, dictionaries, functions & OOP</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#355F99] shrink-0" aria-hidden="true" />
+                      <span>Webcam bounding boxes & color segmentations</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#355F99] shrink-0" aria-hidden="true" />
+                      <span>Autonomous rover obstacle avoidance logic</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Link href="/courses/applied-ai-for-teens" className="block">
+                    <Button variant="primary" size="sm" className="w-full justify-between">
+                      <span>Explore Teen Robotics Syllabus</span>
+                      <ArrowRight className="h-4 w-4 ml-1 arrow-icon" aria-hidden="true" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Pathway 3: College & University */}
+              <div className="lg:col-span-6 rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-9 space-y-6 flex flex-col justify-between card-editorial group hover:border-[#17243A]/60">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="h-11 w-11 rounded-xl bg-[#F0F2F4] text-[#17243A] flex items-center justify-center transition-transform group-hover:scale-105 duration-200">
+                      <GraduationCap className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <Badge variant="navy">Undergrads & Postgrads</Badge>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-[#17243A]">
+                      Deep Learning & PyTorch
+                    </h3>
+                    <p className="text-xs font-semibold text-[#17243A] mt-0.5">
+                      Mathematical Foundations, Convolutions & Transformers
+                    </p>
+                  </div>
+                  <p className="text-sm text-[#687386] leading-relaxed">
+                    Rigorous vector calculus and gradient descent paired with hands-on systems code. Implement multi-head attention mechanisms from scratch and debug training loss curves.
+                  </p>
+                  <div className="pt-2 border-t border-[#DDE2E7] space-y-2 text-xs text-[#354052]">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#17243A] shrink-0" aria-hidden="true" />
+                      <span>Loss functions, backprop math & custom autograd</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#17243A] shrink-0" aria-hidden="true" />
+                      <span>PyTorch CNNs, residual blocks & data loaders</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#17243A] shrink-0" aria-hidden="true" />
+                      <span>Self-attention tensors & BERT/GPT architectural builds</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Link href="/courses/applied-deep-learning-college" className="block">
+                    <Button variant="outline" size="sm" className="w-full justify-between">
+                      <span>Explore College Syllabus</span>
+                      <ArrowRight className="h-4 w-4 ml-1 arrow-icon" aria-hidden="true" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Pathway 4: Adults & Working Professionals */}
+              <div className="lg:col-span-6 rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-9 space-y-6 flex flex-col justify-between card-editorial card-ai-glow group">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="h-11 w-11 rounded-xl bg-[#FDF6ED] text-[#9A6726] flex items-center justify-center transition-transform group-hover:scale-105 duration-200">
+                      <Cpu className="h-5 w-5 text-[#9A6726]" aria-hidden="true" />
+                    </div>
+                    <Badge variant="warm">Working Professionals</Badge>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-[#17243A]">
+                      Generative <span className="text-gradient-ai">AI</span> Systems & RAG
+                    </h3>
+                    <p className="text-xs font-semibold text-[#9A6726] mt-0.5">
+                      Vector Databases, Embeddings & Production LLM Pipelines
+                    </p>
+                  </div>
+                  <p className="text-sm text-[#687386] leading-relaxed">
+                    Engineering real LLM pipelines that do not hallucinate. Vector search, chunking strategies, prompt engineering patterns, and autonomous tool calling agents.
+                  </p>
+                  <div className="pt-2 border-t border-[#DDE2E7] space-y-2 text-xs text-[#354052]">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#9A6726] shrink-0" aria-hidden="true" />
+                      <span>Retrieval-Augmented Generation (RAG) architecture</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#9A6726] shrink-0" aria-hidden="true" />
+                      <span>Vector indexing with pgvector & semantic retrieval</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-[#9A6726] shrink-0" aria-hidden="true" />
+                      <span>Agentic function-calling & structured JSON output</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Link href="/courses/practical-generative-ai-adults" className="block">
+                    <Button variant="outline" size="sm" className="w-full justify-between">
+                      <span>Explore Professional Syllabus</span>
+                      <ArrowRight className="h-4 w-4 ml-1 arrow-icon" aria-hidden="true" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* 7. Frequently Asked Questions */}
-      <section className="py-20 bg-[#F3F6FA] border-b border-[#DCE4EE]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="text-center space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#3869AD]">
-              Got Questions?
-            </h2>
-            <h3 className="text-3xl font-extrabold text-[#142541]">
-              Frequently Asked Questions
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              {
-                q: "What prior programming experience is required?",
-                a: "For Young Learners (ages 7–11) and introductory Teen tracks, no prior coding knowledge is required. College and adult deep learning courses assume foundational algebra and basic Python knowledge.",
-              },
-              {
-                q: "How does the Parent / Guardian Portal work?",
-                a: "Syntaxora enforces strict guardian verification. Once verified, parents can track live class attendance, review released assignment feedback, check syllabus progress, and view invoices without accessing any other family's data.",
-              },
-              {
-                q: "What hardware is necessary for AI courses?",
-                a: "A desktop or laptop running Windows, macOS, or modern Linux with webcam and microphone. Heavy neural network training for college and adult courses is handled via cloud environments, so an expensive GPU is not mandatory.",
-              },
-              {
-                q: "What if a student misses a live class?",
-                a: "All sessions are recorded and archived in the student's authenticated portal. Instructors record official attendance with audit trails, and parents are notified of absences if notification permissions are enabled.",
-              },
-            ].map((faq, idx) => (
-              <details
-                key={idx}
-                className="group rounded-xl border border-[#DCE4EE] bg-white p-6 transition-colors open:border-[#3869AD]"
-              >
-                <summary className="flex cursor-pointer items-center justify-between font-semibold text-[#142541] focus-visible:outline-none">
-                  <span>{faq.q}</span>
-                  <span className="ml-4 text-xs font-bold text-[#3869AD] group-open:rotate-180 transition-transform">
-                    ▼
-                  </span>
-                </summary>
-                <p className="mt-3 text-sm text-[#5F6F84] leading-relaxed">
-                  {faq.a}
+      {/* =========================================================================
+          3. FEATURED COURSES CATALOG (Real Database Content)
+          ========================================================================= */}
+      <section className="py-18 lg:py-24 border-b border-[#DDE2E7] bg-white">
+        <Reveal>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-gradient-ai">
+                  Live Interactive AI Masterclasses
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
+                  Published academy <span className="text-gradient-ai">AI</span> courses.
+                </h2>
+                <p className="text-base text-[#687386] max-w-xl">
+                  Every course is taught by approved academy faculty with real live video studio sessions, weekly labs, and private code reviews.
                 </p>
-              </details>
-            ))}
+              </div>
+              <Link href="/courses">
+                <Button variant="primary" size="sm" className="font-semibold">
+                  Browse Full Course Catalog
+                  <ArrowRight className="h-3.5 w-3.5 ml-1.5 arrow-icon" aria-hidden="true" />
+                </Button>
+              </Link>
+            </div>
+
+            {courses.length === 0 ? (
+              <div className="rounded-2xl border border-[#DDE2E7] bg-[#FAF8F3] p-12 text-center space-y-4">
+                <BookOpen className="h-10 w-10 mx-auto text-[#687386]" aria-hidden="true" />
+                <h3 className="text-lg font-bold text-[#17243A]">No Courses Currently Open</h3>
+                <p className="text-sm text-[#687386] max-w-md mx-auto">
+                  Next cohorts are being finalized by academy administration. Contact admissions to be placed on the priority registration list.
+                </p>
+                <Link href="/contact">
+                  <Button variant="outline" size="sm">
+                    Contact Admissions Support
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {courses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="rounded-2xl border border-[#DDE2E7] bg-[#FAF8F3] p-7 sm:p-8 flex flex-col justify-between card-editorial group hover:border-[#355F99]/60"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Badge variant="primary" className="uppercase text-[10px] tracking-wider">
+                          {course.audience_group.replace("_", " ")}
+                        </Badge>
+                        <div className="text-xs font-semibold text-[#167F78] flex items-center gap-1">
+                          <Video className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span>Live Online Studio</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-[#17243A] leading-snug group-hover:text-[#355F99] transition-colors">
+                          {course.title}
+                        </h3>
+                        <p className="text-sm text-[#687386] mt-2 line-clamp-3 leading-relaxed">
+                          {course.summary}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[#DDE2E7] text-xs text-[#354052]">
+                        <div>
+                          <span className="text-[#687386] block text-[11px]">Duration</span>
+                          <span className="font-semibold text-[#17243A]">{course.duration_weeks} Weeks</span>
+                        </div>
+                        <div>
+                          <span className="text-[#687386] block text-[11px]">Level</span>
+                          <span className="font-semibold text-[#17243A] capitalize">{course.level}</span>
+                        </div>
+                        <div>
+                          <span className="text-[#687386] block text-[11px]">Tuition</span>
+                          <span className="font-bold text-[#167F78]">
+                            {formatCurrency(course.price_in_cents, course.currency)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-6 mt-4 border-t border-[#DDE2E7] flex items-center justify-between gap-3">
+                      <Link href={`/courses/${course.slug}`} className="text-xs font-semibold text-[#355F99] hover:underline flex items-center gap-1">
+                        <span>View Detailed Modules</span>
+                        <ArrowRight className="h-3 w-3 arrow-icon" aria-hidden="true" />
+                      </Link>
+                      <Link href={`/apply?course=${course.id}`}>
+                        <Button variant="primary" size="sm">
+                          Apply to Cohort
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* 8. Final CTA */}
-      <section className="py-16 bg-[#142541] text-white text-center">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-extrabold">
-            Ready to Begin Practical AI Mastery?
-          </h2>
-          <p className="text-base text-[#DCE4EE]/80 max-w-xl mx-auto">
-            Explore our curriculum or contact admissions to discuss the best learning track for you or your child.
-          </p>
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/courses">
-              <Button variant="primary" size="lg" className="w-full sm:w-auto font-semibold">
-                View All Courses
-              </Button>
-            </Link>
-            <Link href="/contact">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto bg-transparent border-white/20 text-white hover:bg-white/10">
-                Contact Admissions
-              </Button>
-            </Link>
+      {/* =========================================================================
+          4. METHODOLOGY — Visual Studio Workflow
+          ========================================================================= */}
+      <section className="py-18 lg:py-24 border-b border-[#DDE2E7]">
+        <Reveal>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="text-center max-w-2xl mx-auto space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#167F78]">
+                The Pedagogical Architecture
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
+                How learning actually happens.
+              </h2>
+              <p className="text-base text-[#687386]">
+                We reject passive video-watching. Every student builds software with live faculty guidance, verifiable code repositories, and individual debugging sessions.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="rounded-xl border border-[#DDE2E7] bg-white p-6 space-y-3 card-editorial">
+                <div className="h-10 w-10 rounded-lg bg-[#EAF0F8] text-[#355F99] flex items-center justify-center font-bold text-sm">
+                  01
+                </div>
+                <h3 className="text-lg font-bold text-[#17243A]">Live Studio Cohorts</h3>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Small interactive classes where faculty inspect learner terminals, guide architectural design, and answer questions live.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#DDE2E7] bg-white p-6 space-y-3 card-editorial">
+                <div className="h-10 w-10 rounded-lg bg-[#E7F5F4] text-[#167F78] flex items-center justify-center font-bold text-sm">
+                  02
+                </div>
+                <h3 className="text-lg font-bold text-[#17243A]">Hands-On Labs</h3>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Structured assignments focused on training loss, computer vision stream processing, and neural network fine-tuning.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#DDE2E7] bg-white p-6 space-y-3 card-editorial">
+                <div className="h-10 w-10 rounded-lg bg-[#FDF6ED] text-[#9A6726] flex items-center justify-center font-bold text-sm">
+                  03
+                </div>
+                <h3 className="text-lg font-bold text-[#17243A]">Personalized Review</h3>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Instructors provide detailed inline feedback on submissions, grading for code clarity, algorithmic correctness, and test coverage.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#DDE2E7] bg-white p-6 space-y-3 card-editorial">
+                <div className="h-10 w-10 rounded-lg bg-[#F0F2F4] text-[#17243A] flex items-center justify-center font-bold text-sm">
+                  04
+                </div>
+                <h3 className="text-lg font-bold text-[#17243A]">Verified Progress</h3>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Attendance and milestones are logged securely to the Student and Guardian portals, giving families transparent oversight.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+        </Reveal>
+      </section>
+
+      {/* =========================================================================
+          5. LEARNER ADMISSION JOURNEY (How It Works)
+          ========================================================================= */}
+      <section id="how-it-works" className="py-18 lg:py-24 border-b border-[#DDE2E7] bg-white">
+        <Reveal>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#DDE2E7]">
+              <div className="space-y-2 max-w-2xl">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#355F99]">
+                  Admissions Policy & Enrollment
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
+                  The six-step learner journey.
+                </h2>
+                <p className="text-base text-[#687386]">
+                  To maintain small cohorts and child safety, student accounts cannot be self-registered. Every learner undergoes faculty placement.
+                </p>
+              </div>
+              <Link href="/how-it-works">
+                <Button variant="outline" size="sm">
+                  Read Detailed Guide
+                  <ArrowRight className="h-3.5 w-3.5 ml-1.5 arrow-icon" aria-hidden="true" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="p-6 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-2.5 card-editorial">
+                <div className="text-xs font-bold text-[#355F99] uppercase tracking-wider">Step 01</div>
+                <h4 className="text-lg font-bold text-[#17243A]">Explore Programs</h4>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Inspect age-tailored pathways in Young Explorers, Teen Robotics, College Deep Learning, or Generative AI.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-2.5 card-editorial">
+                <div className="text-xs font-bold text-[#355F99] uppercase tracking-wider">Step 02</div>
+                <h4 className="text-lg font-bold text-[#17243A]">Submit Application</h4>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Complete the admission form with student background and preferred track at <span className="font-mono text-xs font-semibold">/apply</span>.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-2.5 card-editorial">
+                <div className="text-xs font-bold text-[#355F99] uppercase tracking-wider">Step 03</div>
+                <h4 className="text-lg font-bold text-[#17243A]">Faculty Review</h4>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Admissions coordinators evaluate cognitive level, ensure cohort fit, and assign eligible candidates.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-2.5 card-editorial">
+                <div className="text-xs font-bold text-[#167F78] uppercase tracking-wider">Step 04</div>
+                <h4 className="text-lg font-bold text-[#17243A]">Account Activation</h4>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Approved students receive their secure Student Code and password creation invitation via verified email.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-2.5 card-editorial">
+                <div className="text-xs font-bold text-[#167F78] uppercase tracking-wider">Step 05</div>
+                <h4 className="text-lg font-bold text-[#17243A]">Live Class Participation</h4>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Students access live video studio sessions directly linked from the Student Portal with real-time mentor code review.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-2.5 card-editorial">
+                <div className="text-xs font-bold text-[#167F78] uppercase tracking-wider">Step 06</div>
+                <h4 className="text-lg font-bold text-[#17243A]">Verified Mastery & Portfolio</h4>
+                <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
+                  Learners build working projects. Parents monitor verified attendance and assignment feedback through the Guardian Portal.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* =========================================================================
+          6. ACADEMY FACULTY HIGHLIGHT (Real Verified Profiles)
+          ========================================================================= */}
+      {instructors.length > 0 && (
+        <section className="py-18 lg:py-24 border-b border-[#DDE2E7]">
+          <Reveal>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="space-y-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#167F78]">
+                    Verified Mentors & Authors
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
+                    Taught by practicing computer scientists.
+                  </h2>
+                  <p className="text-base text-[#687386] max-w-xl">
+                    Our instructors combine university research backgrounds with passionate youth and adult pedagogy.
+                  </p>
+                </div>
+                <Link href="/instructors">
+                  <Button variant="outline" size="sm">
+                    View Full Faculty
+                    <ArrowRight className="h-3.5 w-3.5 ml-1.5 arrow-icon" aria-hidden="true" />
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {instructors.slice(0, 3).map((inst) => (
+                  <div
+                    key={inst.id}
+                    className="rounded-2xl border border-[#DDE2E7] bg-white p-6 space-y-4 shadow-sm card-editorial group hover:border-[#17243A]/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-[#17243A] text-[#D7A66A] flex items-center justify-center font-bold text-lg font-display italic transition-transform group-hover:scale-105 duration-200">
+                        {inst.full_name.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-base text-[#17243A] group-hover:text-[#355F99] transition-colors">
+                          {inst.full_name}
+                        </h3>
+                        <p className="text-xs text-[#355F99] font-medium">
+                          {(inst as { title?: string }).title || "Academy Faculty Member"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[#687386] leading-relaxed line-clamp-3">
+                      {inst.bio}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </section>
+      )}
+
+      {/* =========================================================================
+          7. FINAL CALL TO ACTION — Editorial & Restrained
+          ========================================================================= */}
+      <section className="py-20 lg:py-28 bg-[#17243A] text-white">
+        <Reveal>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-[#DDE2E7]">
+              <Sparkles className="h-3.5 w-3.5 text-[#D7A66A]" aria-hidden="true" />
+              <span>Selective Cohort Admissions • Fixed Class Sizes</span>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+                Begin your education in{" "}
+                <span className="text-gradient-ai-glow">
+                  authentic machine intelligence
+                </span>
+                .
+              </h2>
+              <p className="text-base sm:text-lg text-[#DDE2E7]/80 max-w-2xl mx-auto leading-relaxed font-normal">
+                Join students, teenagers, and professionals learning to engineer <span className="text-gradient-ai-glow font-bold">neural networks</span> and robotics. Applications are reviewed on a rolling basis.
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/apply">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto font-bold px-8 btn-gradient-ai"
+                >
+                  Apply for Admission
+                  <ArrowRight className="h-4 w-4 ml-2 arrow-icon" aria-hidden="true" />
+                </Button>
+              </Link>
+              <Link href="/courses">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto bg-transparent border-white/30 text-white hover:bg-white/10 hover:border-white hover:text-white"
+                >
+                  Browse All Courses
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-6 border-t border-white/10 text-xs text-[#DDE2E7]/60">
+              Questions before applying? Email admissions at{" "}
+              <a href="mailto:admissions@syntaxora.com" className="text-white underline hover:text-[#D7A66A]">
+                admissions@syntaxora.com
+              </a>
+            </div>
+          </div>
+        </Reveal>
       </section>
     </div>
   );

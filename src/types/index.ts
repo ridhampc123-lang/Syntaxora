@@ -36,6 +36,11 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface InstructorProfile extends Profile {
+  title?: string;
+  specialties?: string[];
+}
+
 export interface Student {
   id: string;
   profile_id?: string | null;
@@ -299,5 +304,7 @@ export interface StudentApplication {
   created_at: string;
   updated_at: string;
   course?: Course | null;
+  student?: { id: string; student_code: string } | null;
+  student_code?: string | null;
 }
 

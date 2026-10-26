@@ -7,6 +7,13 @@ export interface ContactActionResult {
   success: boolean;
   message: string;
   errors?: Record<string, string[]>;
+  values?: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    subject?: string;
+    message?: string;
+  };
 }
 
 export async function submitContactEnquiry(
@@ -31,10 +38,12 @@ export async function submitContactEnquiry(
       if (!errors[path]) errors[path] = [];
       errors[path].push(issue.message);
     }
+    const errorCount = Object.keys(errors).length;
     return {
       success: false,
-      message: "Please correct the highlighted fields.",
+      message: `Please correct the ${errorCount} highlighted field${errorCount > 1 ? "s" : ""} below. Your entered details have been saved.`,
       errors,
+      values: rawData,
     };
   }
 

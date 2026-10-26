@@ -18,8 +18,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1 text-center sm:text-left">
-        <h1 className="text-2xl font-bold text-[#142541]">Reset Password</h1>
-        <p className="text-xs text-[#5F6F84]">
+        <h1 className="text-2xl font-bold text-[#17243A]">Reset Password</h1>
+        <p className="text-xs text-[#687386]">
           Enter your registered email address and we will dispatch a password recovery link.
         </p>
       </div>
@@ -46,15 +46,15 @@ export default function ForgotPasswordPage() {
           variant="primary"
           size="lg"
           isLoading={isPending}
-          className="w-full justify-center"
+          className="w-full justify-center font-semibold"
         >
           Send Password Reset Link
         </Button>
       </form>
 
-      <div className="text-center text-xs text-[#5F6F84] pt-2 border-t border-[#DCE4EE]">
+      <div className="text-center text-xs text-[#687386] pt-4 border-t border-[#DDE2E7]">
         Remembered your password?{" "}
-        <Link href="/login" className="font-semibold text-[#3869AD] hover:underline">
+        <Link href="/login" className="font-semibold text-[#355F99] hover:underline">
           Return to Sign In
         </Link>
       </div>

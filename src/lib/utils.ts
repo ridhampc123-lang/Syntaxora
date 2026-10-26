@@ -5,10 +5,20 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amountInCents: number, currency = "USD"): string {
+export function formatCurrency(amountInCents: number, currency = "INR"): string {
+  const normCurrency = (currency || "INR").toUpperCase();
+  // Default to INR currency symbol (₹) and Indian numbering system (e.g. ₹14,999)
+  const isINR = normCurrency === "INR" || normCurrency === "USD";
+  if (isINR) {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: amountInCents % 100 === 0 ? 0 : 2,
+    }).format(amountInCents / 100);
+  }
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency.toUpperCase(),
+    currency: normCurrency,
   }).format(amountInCents / 100);
 }
 

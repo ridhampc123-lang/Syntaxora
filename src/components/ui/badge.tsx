@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "primary" | "teal" | "navy" | "secondary" | "success" | "warning" | "error" | "outline";
+  variant?: "primary" | "teal" | "navy" | "secondary" | "success" | "warning" | "error" | "outline" | "warm";
 }
 
 export function Badge({
@@ -12,14 +12,15 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const variantStyles = {
-    primary: "bg-[#E8EFF8] text-[#3869AD] border-transparent",
-    teal: "bg-[#E2F4F2] text-[#168B83] border-transparent",
-    navy: "bg-[#142541] text-white border-transparent",
-    secondary: "bg-[#F3F6FA] text-[#5F6F84] border-[#DCE4EE]",
+    primary: "bg-[#EAF0F8] text-[#355F99] border-[#355F99]/20",
+    teal: "bg-[#E7F5F4] text-[#167F78] border-[#167F78]/20",
+    navy: "bg-[#17243A] text-white border-transparent",
+    warm: "bg-[#FDF6ED] text-[#9A6726] border-[#D7A66A]/30",
+    secondary: "bg-[#F0F2F4] text-[#687386] border-[#DDE2E7]",
     success: "bg-[#DCFCE7] text-[#15803D] border-transparent",
     warning: "bg-[#FEF3C7] text-[#B45309] border-transparent",
     error: "bg-[#FEE2E2] text-[#B91C1C] border-transparent",
-    outline: "bg-transparent text-[#263449] border-[#DCE4EE]",
+    outline: "bg-transparent text-[#354052] border-[#DDE2E7]",
   };
 
   return (

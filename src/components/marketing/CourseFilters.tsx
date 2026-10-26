@@ -1,10 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, RotateCcw } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Search, RotateCcw, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const AUDIENCE_PILLS = [
+  { label: "All Audiences", value: "all" },
+  { label: "Young Learners (7–11)", value: "young_learners" },
+  { label: "Teens & Robotics (12–17)", value: "teens" },
+  { label: "College & University", value: "college_students" },
+  { label: "Adults & Professionals", value: "adults" },
+];
 
 export function CourseFilters() {
   const router = useRouter();
@@ -15,7 +22,7 @@ export function CourseFilters() {
   const currentMode = searchParams.get("mode") || "all";
   const currentSearch = searchParams.get("q") || "";
 
-  const [searchTerm, setSearchTerm] = React.useState(currentSearch);
+  const [searchTerm, setSearchTerm] = useState(currentSearch);
 
   function updateQuery(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -37,92 +44,123 @@ export function CourseFilters() {
     router.push("/courses");
   }
 
+  const hasActiveFilters =
+    currentAudience !== "all" ||
+    currentLevel !== "all" ||
+    currentMode !== "all" ||
+    currentSearch !== "";
+
   return (
-    <div className="rounded-xl border border-[#DCE4EE] bg-white p-6 shadow-sm space-y-4">
-      {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex gap-2">
+    <div className="rounded-2xl border border-[#DDE2E7] bg-white p-6 shadow-sm space-y-5">
+      {/* Search Input Bar */}
+      <form onSubmit={handleSearchSubmit} className="flex gap-2.5">
         <div className="relative flex-1">
-          <Input
+          <input
+            type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by course title, keywords, or topics..."
-            className="pl-9"
+            placeholder="Search courses by topic, technology (e.g. OpenCV, PyTorch, RAG), or level..."
+            className="w-full rounded-lg border border-[#DDE2E7] bg-[#FAF8F3] px-3.5 py-2.5 pl-10 text-sm text-[#17243A] placeholder:text-[#687386] transition-colors focus:border-[#355F99] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#355F99]/15"
           />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#5F6F84]" aria-hidden="true" />
+          <Search className="absolute left-3.5 top-3 h-4 w-4 text-[#687386]" aria-hidden="true" />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                updateQuery("q", "");
+              }}
+              className="absolute right-3 top-3 text-[#687386] hover:text-[#17243A]"
+              aria-label="Clear search input"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
-        <Button type="submit" variant="primary" size="md">
+        <Button type="submit" variant="primary" size="md" className="shrink-0 font-semibold px-5">
           Search
         </Button>
       </form>
 
-      {/* Filter Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-        {/* Audience Filter */}
-        <div className="space-y-1.5">
-          <label htmlFor="filter-audience" className="block text-xs font-semibold text-[#142541] uppercase tracking-wider">
-            Age / Audience Group
-          </label>
-          <select
-            id="filter-audience"
-            value={currentAudience}
-            onChange={(e) => updateQuery("audience", e.target.value)}
-            className="w-full rounded-lg border border-[#DCE4EE] bg-white px-3 py-2 text-sm text-[#263449] focus:border-[#3869AD] focus:outline-none"
-          >
-            <option value="all">All Audiences</option>
-            <option value="young_learners">Young Learners (Ages 7–11)</option>
-            <option value="teens">Teens & High School (Ages 12–17)</option>
-            <option value="college_students">College & University</option>
-            <option value="adults">Adults & Professionals</option>
-          </select>
+      {/* Audience Quick Pills */}
+      <div className="space-y-2">
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-[#687386]">
+          Filter by Track / Audience
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {AUDIENCE_PILLS.map((pill) => {
+            const isSelected = currentAudience === pill.value;
+            return (
+              <button
+                key={pill.value}
+                type="button"
+                onClick={() => updateQuery("audience", pill.value)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-[#17243A] text-white border-[#17243A] shadow-xs"
+                    : "bg-[#FAF8F3] text-[#354052] border-[#DDE2E7] hover:border-[#355F99] hover:text-[#17243A]"
+                }`}
+              >
+                {pill.label}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
+      {/* Secondary Dropdown Selectors */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[#DDE2E7]">
         {/* Level Filter */}
         <div className="space-y-1.5">
-          <label htmlFor="filter-level" className="block text-xs font-semibold text-[#142541] uppercase tracking-wider">
-            Skill Level
+          <label htmlFor="filter-level" className="block text-[11px] font-bold uppercase tracking-wider text-[#687386]">
+            Prerequisite Level
           </label>
           <select
             id="filter-level"
             value={currentLevel}
             onChange={(e) => updateQuery("level", e.target.value)}
-            className="w-full rounded-lg border border-[#DCE4EE] bg-white px-3 py-2 text-sm text-[#263449] focus:border-[#3869AD] focus:outline-none"
+            className="w-full rounded-lg border border-[#DDE2E7] bg-white px-3 py-2 text-xs font-medium text-[#17243A] focus:border-[#355F99] focus:outline-none"
           >
-            <option value="all">All Levels</option>
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
+            <option value="all">All Difficulty Levels</option>
+            <option value="beginner">Beginner (No prior ML experience)</option>
+            <option value="intermediate">Intermediate (Python foundations required)</option>
+            <option value="advanced">Advanced (Calculus & PyTorch math)</option>
           </select>
         </div>
 
         {/* Delivery Mode Filter */}
         <div className="space-y-1.5">
-          <label htmlFor="filter-mode" className="block text-xs font-semibold text-[#142541] uppercase tracking-wider">
-            Delivery Mode
+          <label htmlFor="filter-mode" className="block text-[11px] font-bold uppercase tracking-wider text-[#687386]">
+            Instruction Format
           </label>
           <select
             id="filter-mode"
             value={currentMode}
             onChange={(e) => updateQuery("mode", e.target.value)}
-            className="w-full rounded-lg border border-[#DCE4EE] bg-white px-3 py-2 text-sm text-[#263449] focus:border-[#3869AD] focus:outline-none"
+            className="w-full rounded-lg border border-[#DDE2E7] bg-white px-3 py-2 text-xs font-medium text-[#17243A] focus:border-[#355F99] focus:outline-none"
           >
-            <option value="all">All Modes</option>
-            <option value="live_online">Live Online Cohort</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="self_paced">Self-Paced / Async</option>
+            <option value="all">All Formats</option>
+            <option value="live_online">Live Interactive Video Cohort</option>
+            <option value="hybrid">Hybrid (Live Sessions + Self-Paced Labs)</option>
+            <option value="self_paced">Self-Paced / Asynchronous</option>
           </select>
         </div>
       </div>
 
-      {(currentAudience !== "all" || currentLevel !== "all" || currentMode !== "all" || currentSearch !== "") && (
-        <div className="flex items-center justify-between pt-2 border-t border-[#DCE4EE] text-xs text-[#5F6F84]">
-          <span>Filters applied</span>
+      {/* Reset Bar */}
+      {hasActiveFilters && (
+        <div className="flex items-center justify-between pt-3 border-t border-[#DDE2E7] text-xs text-[#687386]">
+          <div className="flex items-center gap-1.5">
+            <Filter className="h-3.5 w-3.5 text-[#355F99]" aria-hidden="true" />
+            <span>Active filters narrowing course catalog</span>
+          </div>
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center gap-1 font-semibold text-[#3869AD] hover:underline"
+            className="flex items-center gap-1 font-semibold text-[#355F99] hover:underline cursor-pointer"
           >
             <RotateCcw className="h-3 w-3" />
-            Reset all filters
+            Clear all filters
           </button>
         </div>
       )}

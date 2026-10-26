@@ -214,10 +214,141 @@ export async function getApprovedInstructors() {
       return APPROVED_ACADEMY_INSTRUCTORS;
     }
 
-    return data as (Profile & { title?: string; specialties?: string[] })[];
+    return data.map((item) => {
+      const mem = APPROVED_ACADEMY_INSTRUCTORS.find((i) => i.id === item.id);
+      return {
+        ...item,
+        title: mem?.title || (item as { title?: string }).title || "Academy Faculty Member",
+        specialties:
+          mem?.specialties ||
+          (item as { specialties?: string[] }).specialties ||
+          ["Artificial Intelligence", "Machine Learning"],
+      };
+    }) as (Profile & { title?: string; specialties?: string[] })[];
   } catch {
     return APPROVED_ACADEMY_INSTRUCTORS;
   }
+}
+
+export interface CreateInstructorParams {
+  fullName: string;
+  email: string;
+  title: string;
+  bio: string;
+  specialties?: string[];
+  avatarUrl?: string | null;
+}
+
+/**
+ * Creates and registers a new academy instructor.
+ */
+export async function createInstructor(params: CreateInstructorParams) {
+  const id = "i" + crypto.randomUUID().replace(/-/g, "").slice(0, 31);
+  const now = new Date().toISOString();
+
+  const newInstructor: Profile & { title: string; specialties: string[] } = {
+    id,
+    role: "instructor",
+    full_name: params.fullName.trim(),
+    email: params.email.trim().toLowerCase(),
+    avatar_url: params.avatarUrl ? params.avatarUrl.trim() : null,
+    bio: params.bio.trim(),
+    title: params.title.trim(),
+    specialties: params.specialties || [],
+    created_at: now,
+    updated_at: now,
+  };
+
+  APPROVED_ACADEMY_INSTRUCTORS.unshift(newInstructor);
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      await supabase.from("profiles").insert({
+        id: newInstructor.id,
+        role: "instructor",
+        full_name: newInstructor.full_name,
+        email: newInstructor.email,
+        avatar_url: newInstructor.avatar_url,
+        bio: newInstructor.bio,
+      });
+    } catch (err) {
+      console.error("[createInstructor Supabase error]", err);
+    }
+  }
+
+  return { success: true, instructor: newInstructor };
+}
+
+export interface UpdateInstructorParams {
+  id: string;
+  fullName: string;
+  email: string;
+  title: string;
+  bio: string;
+  specialties?: string[];
+  avatarUrl?: string | null;
+}
+
+/**
+ * Updates an existing instructor profile.
+ */
+export async function updateInstructor(params: UpdateInstructorParams) {
+  const now = new Date().toISOString();
+  const existing = APPROVED_ACADEMY_INSTRUCTORS.find((i) => i.id === params.id);
+
+  if (existing) {
+    existing.full_name = params.fullName.trim();
+    existing.email = params.email.trim().toLowerCase();
+    existing.title = params.title.trim();
+    existing.bio = params.bio.trim();
+    existing.specialties = params.specialties || [];
+    if (params.avatarUrl !== undefined) {
+      existing.avatar_url = params.avatarUrl ? params.avatarUrl.trim() : null;
+    }
+    existing.updated_at = now;
+  }
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      await supabase
+        .from("profiles")
+        .update({
+          full_name: params.fullName.trim(),
+          email: params.email.trim().toLowerCase(),
+          avatar_url: params.avatarUrl ? params.avatarUrl.trim() : null,
+          bio: params.bio.trim(),
+          updated_at: now,
+        })
+        .eq("id", params.id);
+    } catch (err) {
+      console.error("[updateInstructor Supabase error]", err);
+    }
+  }
+
+  return { success: true, instructor: existing };
+}
+
+/**
+ * Removes an instructor from the active academy roster.
+ */
+export async function deleteInstructor(id: string) {
+  const idx = APPROVED_ACADEMY_INSTRUCTORS.findIndex((i) => i.id === id);
+  if (idx !== -1) {
+    APPROVED_ACADEMY_INSTRUCTORS.splice(idx, 1);
+  }
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      await supabase.from("profiles").delete().eq("id", id);
+    } catch (err) {
+      console.error("[deleteInstructor Supabase error]", err);
+    }
+  }
+
+  return { success: true };
 }
 
 /**

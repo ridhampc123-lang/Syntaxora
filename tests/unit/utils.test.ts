@@ -7,9 +7,10 @@ describe("Utility functions", () => {
     expect(result).toBe("py-2 px-6 bg-blue-500");
   });
 
-  it("formats currency in cents to dollar string", () => {
-    expect(formatCurrency(49900, "USD")).toBe("$499.00");
-    expect(formatCurrency(0, "USD")).toBe("$0.00");
+  it("formats currency in cents to Indian Rupee (INR) string", () => {
+    expect(formatCurrency(49900, "INR")).toBe("₹499");
+    expect(formatCurrency(0, "INR")).toBe("₹0");
+    expect(formatCurrency(1499900)).toBe("₹14,999");
   });
 
   it("formats dates into readable format", () => {

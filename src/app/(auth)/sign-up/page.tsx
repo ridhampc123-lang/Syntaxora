@@ -11,25 +11,25 @@ export default function SignUpPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1 text-center sm:text-left">
-        <h1 className="text-2xl font-bold text-[#142541]">Parent Registration</h1>
-        <p className="text-xs text-[#5F6F84]">
-          Create a guardian account to securely monitor your child&apos;s verified learning progress and attendance.
+        <h1 className="text-2xl font-bold text-[#17243A]">Parent & Guardian Registration</h1>
+        <p className="text-xs text-[#687386]">
+          Create a guardian account to securely monitor your enrolled student&apos;s verified attendance and progress.
         </p>
       </div>
 
       <SignUpForm />
 
-      <div className="pt-2 border-t border-[#DCE4EE] text-center space-y-2 text-xs text-[#5F6F84]">
+      <div className="pt-4 border-t border-[#DDE2E7] text-center space-y-2 text-xs text-[#687386]">
         <div>
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-[#3869AD] hover:underline">
-            Sign in
+          <Link href="/login" className="font-semibold text-[#355F99] hover:underline">
+            Sign In
           </Link>
         </div>
         <div>
-          Student applying for admission?{" "}
-          <Link href="/apply" className="font-semibold text-[#168B83] hover:underline">
-            Submit Admission Application
+          Prospective student?{" "}
+          <Link href="/apply" className="font-semibold text-[#167F78] hover:underline">
+            Submit Cohort Admission Application
           </Link>
         </div>
       </div>

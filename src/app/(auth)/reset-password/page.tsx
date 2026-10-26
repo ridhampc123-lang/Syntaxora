@@ -29,8 +29,8 @@ export default function ResetPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1 text-center sm:text-left">
-        <h1 className="text-2xl font-bold text-[#142541]">Set New Password</h1>
-        <p className="text-xs text-[#5F6F84]">
+        <h1 className="text-2xl font-bold text-[#17243A]">Set New Password</h1>
+        <p className="text-xs text-[#687386]">
           Create a secure password with at least 8 characters, 1 uppercase letter, and 1 number.
         </p>
       </div>
@@ -58,15 +58,15 @@ export default function ResetPasswordPage() {
           variant="primary"
           size="lg"
           isLoading={isPending}
-          className="w-full justify-center"
+          className="w-full justify-center font-semibold"
         >
           Update Password
         </Button>
       </form>
 
-      <div className="text-center text-xs text-[#5F6F84] pt-2 border-t border-[#DCE4EE]">
+      <div className="text-center text-xs text-[#687386] pt-4 border-t border-[#DDE2E7]">
         Back to{" "}
-        <Link href="/login" className="font-semibold text-[#3869AD] hover:underline">
+        <Link href="/login" className="font-semibold text-[#355F99] hover:underline">
           Sign In
         </Link>
       </div>

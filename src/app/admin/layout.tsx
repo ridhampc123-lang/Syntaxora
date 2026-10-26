@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  Sparkles,
   LayoutDashboard,
   Users,
   ShieldCheck,
@@ -49,8 +49,14 @@ export default async function AdminLayout({
         <div className="p-6 space-y-6">
           {/* Brand Wordmark */}
           <Link href="/admin" className="flex items-center gap-2.5 font-bold text-lg tracking-tight">
-            <div className="h-8 w-8 rounded-lg bg-[#3869AD] flex items-center justify-center text-white">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
+            <div className="relative h-8 w-8 rounded-lg overflow-hidden bg-[#03060C] border border-white/20 shadow-md shrink-0">
+              <Image
+                src="/icon.png"
+                alt="Syntaxora"
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+              />
             </div>
             <span>Syntaxora</span>
           </Link>

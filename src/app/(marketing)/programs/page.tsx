@@ -17,7 +17,7 @@ import { AIHighlight } from "@/components/ui/ai-highlight";
 export const metadata = {
   title: "Academic Programs & Learning Tracks — Syntaxora",
   description:
-    "Explore our four age-specialized curriculum tracks in machine learning, robotics, and applied artificial intelligence.",
+    "Explore our four age-specialized curriculum tracks in machine learning, computer vision, and applied artificial intelligence.",
 };
 
 const PROGRAMS = [
@@ -45,21 +45,21 @@ const PROGRAMS = [
     id: "teens",
     audience: "Teens & High School",
     ageRange: "Ages 12–17",
-    tagline: "Python Robotics, Computer Vision & Edge Intelligence",
+    tagline: "Python Foundations, Computer Vision & Applied Machine Learning",
     icon: Laptop,
     accent: "#355F99",
     badgeVariant: "primary" as const,
     description:
-      "Transitioning from visual blocks to professional Python engineering. High school students write production-grade syntax, stream camera feeds through OpenCV, and train convolutional networks to classify objects in real time.",
+      "Transitioning from visual blocks to authentic Python engineering. High school students write clean syntax, stream camera feeds through OpenCV, and train models to classify objects and detect patterns in real time.",
     milestones: [
-      "Core Python syntax, list comprehensions, and data structures",
+      "Core Python syntax, data structures, and algorithmic logic",
       "Real-time webcam video stream filtering and edge detection",
-      "Object classification with convolutional neural networks",
-      "Autonomous rover obstacle detection and lane following logic",
+      "Object classification with practical neural network models",
+      "Interactive computer vision applications and smart filters",
     ],
     audienceKey: "teens",
     featuredCourseSlug: "applied-ai-for-teens",
-    deliverable: "Autonomous Robot Vision System in Python",
+    deliverable: "Interactive Computer Vision & Classification App in Python",
   },
   {
     id: "college",
@@ -127,16 +127,16 @@ export default function ProgramsPage() {
                 Specialized AI Curricula & Masterclasses
               </span>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
-                Academic <span className="text-gradient-ai">AI</span> Programs & Pathways
+                Academic <span className="text-gradient-ai">Artificial Intelligence</span> Programs & Pathways
               </h1>
               <p className="text-base text-[#687386] leading-relaxed">
                 Four distinct educational tracks designed around cognitive developmental stages. Every learner works with age peers in small, interactive cohorts.
               </p>
             </div>
             <Link href="/apply">
-              <Button size="md" className="shrink-0 font-bold btn-gradient-ai">
+              <Button variant="ai" size="md" className="shrink-0 font-bold shadow-sm">
                 Apply for Admission
-                <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden="true" />
+                <ArrowRight className="h-4 w-4 ml-1.5 arrow-icon" aria-hidden="true" />
               </Button>
             </Link>
           </div>

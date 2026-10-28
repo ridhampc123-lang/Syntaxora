@@ -126,7 +126,7 @@ export function MarketingHeader() {
             </Button>
           </Link>
           <Link href="/apply">
-            <Button variant="primary" size="sm" className="text-xs">
+            <Button variant="ai" size="sm" className="text-xs font-bold shadow-xs">
               Apply for Admission
               <ArrowRight
                 className="h-3.5 w-3.5 ml-1 arrow-icon"
@@ -216,7 +216,7 @@ export function MarketingHeader() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full block"
                 >
-                  <Button variant="primary" size="md" className="w-full justify-center">
+                  <Button variant="ai" size="md" className="w-full justify-center font-bold">
                     Apply for Admission
                     <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden="true" />
                   </Button>

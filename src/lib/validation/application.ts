@@ -77,6 +77,8 @@ export const applicationReviewSchema = z.object({
   decision: z.enum(["approved", "rejected", "needs_information", "under_review"]),
   decisionReason: z.string().trim().max(500, "Reason must not exceed 500 characters").optional(),
   adminNotes: z.string().trim().max(1000, "Notes must not exceed 1,000 characters").optional(),
+  batchId: z.string().trim().optional().or(z.literal("")),
 });
 
 export type ApplicationReviewInput = z.infer<typeof applicationReviewSchema>;
+

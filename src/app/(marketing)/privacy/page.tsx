@@ -31,7 +31,7 @@ export default function PrivacyPolicyPage() {
             Legal & Data Governance
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
-            Syntaxora <span className="text-gradient-ai">AI</span> Privacy Policy & Minor Protection
+            Syntaxora <span className="text-gradient-ai">Artificial Intelligence</span> Privacy Policy & Minor Protection
           </h1>
           <p className="text-xs text-[#687386] pt-1">
             Last Updated: October 2026 • Governing all Syntaxora academy portals and marketing services

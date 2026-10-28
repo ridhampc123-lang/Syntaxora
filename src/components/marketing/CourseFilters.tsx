@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 const AUDIENCE_PILLS = [
   { label: "All Audiences", value: "all" },
   { label: "Young Learners (7–11)", value: "young_learners" },
-  { label: "Teens & Robotics (12–17)", value: "teens" },
+  { label: "Teens & Python AI (12–17)", value: "teens" },
   { label: "College & University", value: "college_students" },
   { label: "Adults & Professionals", value: "adults" },
 ];

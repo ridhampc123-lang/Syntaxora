@@ -58,26 +58,31 @@ export default async function StudentDashboardPage() {
       getStudentCompletedLessons(student.id),
     ]);
 
-  const upcomingSession = sessions.find((s) => s.status === "scheduled" || s.status === "in_progress") || sessions[0];
+  const upcomingSession = sessions.find((s) => s.status === "scheduled" || s.status === "in_progress");
   const pendingAssignments = assignments.filter((a) => !a.submission);
   const awaitingBatch = enrollments.filter((e) => !e.batch_id);
 
-  // Stats calculation
+  // Stats calculation strictly derived from authentic records (zero mock values)
   const presentCount = attendance.filter((r) => r.status === "present").length;
   const lateCount = attendance.filter((r) => r.status === "late").length;
-  const attendanceRate = attendance.length > 0 ? Math.round(((presentCount + lateCount) / attendance.length) * 100) : 100;
+  const attendanceRate =
+    attendance.length > 0 ? Math.round(((presentCount + lateCount) / attendance.length) * 100) : null;
 
   const totalScore = grades.reduce((acc, g) => acc + (g.score || 0), 0);
   const maxScoreTotal = grades.reduce((acc, g) => acc + (g.assignment?.max_score || 100), 0);
-  const averageGrade = grades.length > 0 ? Math.round((totalScore / maxScoreTotal) * 100) : 94;
+  const averageGrade = grades.length > 0 && maxScoreTotal > 0 ? Math.round((totalScore / maxScoreTotal) * 100) : null;
 
   const primaryCourse = courses[0];
   const totalCourseLessons = courses.reduce((acc, c) => {
-    return acc + (c.modules?.reduce((mAcc, m) => mAcc + (m.lessons?.length || 0), 0) || 8);
+    return acc + (c.modules?.reduce((mAcc, m) => mAcc + (m.lessons?.length || 0), 0) || 0);
   }, 0);
-  const progressPercent = Math.min(100, Math.round(((completedLessons.length || 2) / Math.max(1, totalCourseLessons)) * 100));
+  const progressPercent =
+    totalCourseLessons > 0 ? Math.min(100, Math.round((completedLessons.length / totalCourseLessons) * 100)) : 0;
 
-  const leadInstructor = APPROVED_ACADEMY_INSTRUCTORS[0];
+  const leadInstructor =
+    upcomingSession?.instructor ||
+    primaryCourse?.instructors?.[0] ||
+    APPROVED_ACADEMY_INSTRUCTORS[0];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -88,7 +93,11 @@ export default async function StudentDashboardPage() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-cyan-300 text-xs font-semibold backdrop-blur-xs">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Applied AI & Edge Robotics Cohort</span>
+              <span>
+                {primaryCourse?.title
+                  ? `${primaryCourse.title} • Verified Cohort`
+                  : "Syntaxora AI Learning Academy"}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Welcome back, {auth.profile.full_name}
@@ -118,7 +127,7 @@ export default async function StudentDashboardPage() {
 
       {/* 4 Core Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1 */}
+        {/* Metric 1: Enrolled Tracks */}
         <Card className="border-[#DCE4EE] bg-white shadow-xs hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-bold text-[#5F6F84] uppercase tracking-wider">
@@ -132,12 +141,12 @@ export default async function StudentDashboardPage() {
             <div className="text-2xl font-black text-[#142541]">{courses.length}</div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] text-emerald-600 font-semibold">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Active Curriculum Track</span>
+              <span>{courses.length > 0 ? "Active Curriculum Track" : "Awaiting Enrollment"}</span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Metric 2 */}
+        {/* Metric 2: Attendance Rate */}
         <Card className="border-[#DCE4EE] bg-white shadow-xs hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-bold text-[#5F6F84] uppercase tracking-wider">
@@ -148,14 +157,18 @@ export default async function StudentDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-[#142541]">{attendanceRate}%</div>
+            <div className="text-2xl font-black text-[#142541]">
+              {attendanceRate !== null ? `${attendanceRate}%` : "—"}
+            </div>
             <p className="text-[11px] text-[#5F6F84] mt-1">
-              {presentCount} of {attendance.length || 1} sessions attended
+              {attendance.length > 0
+                ? `${presentCount} of ${attendance.length} sessions attended`
+                : "No sessions logged yet"}
             </p>
           </CardContent>
         </Card>
 
-        {/* Metric 3 */}
+        {/* Metric 3: Pending Deliverables */}
         <Card className="border-[#DCE4EE] bg-white shadow-xs hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-bold text-[#5F6F84] uppercase tracking-wider">
@@ -168,12 +181,12 @@ export default async function StudentDashboardPage() {
           <CardContent>
             <div className="text-2xl font-black text-[#142541]">{pendingAssignments.length}</div>
             <p className="text-[11px] text-[#5F6F84] mt-1">
-              {pendingAssignments.length === 0 ? "All labs up to date" : "Submissions due this week"}
+              {pendingAssignments.length === 0 ? "All labs up to date" : "Submissions due this term"}
             </p>
           </CardContent>
         </Card>
 
-        {/* Metric 4 */}
+        {/* Metric 4: Released GPA Score */}
         <Card className="border-[#DCE4EE] bg-white shadow-xs hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-bold text-[#5F6F84] uppercase tracking-wider">
@@ -184,9 +197,15 @@ export default async function StudentDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-[#142541]">{averageGrade}%</div>
+            <div className="text-2xl font-black text-[#142541]">
+              {averageGrade !== null ? `${averageGrade}%` : "—"}
+            </div>
             <p className="text-[11px] text-purple-700 font-semibold mt-1">
-              {averageGrade >= 90 ? "Grade A (Distinction)" : "Grade B+ (Good Standing)"}
+              {averageGrade !== null
+                ? averageGrade >= 90
+                  ? "Grade A (Distinction)"
+                  : "Grade B+ (Good Standing)"
+                : "Pending faculty review"}
             </p>
           </CardContent>
         </Card>
@@ -205,7 +224,36 @@ export default async function StudentDashboardPage() {
         </div>
       )}
 
-      {/* Next Class Hero Banner */}
+      {/* Zero Enrolled Courses Empty State */}
+      {courses.length === 0 && (
+        <div className="rounded-2xl border border-[#DCE4EE] bg-white p-12 text-center space-y-4 shadow-sm">
+          <div className="h-12 w-12 rounded-2xl bg-blue-50 text-[#3869AD] flex items-center justify-center mx-auto">
+            <BookOpen className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-[#142541]">No Enrolled Curriculum Tracks Found</h3>
+            <p className="text-xs text-[#5F6F84] max-w-md mx-auto leading-relaxed">
+              Your student account has been verified. Once the admissions committee confirms your application and provisions your curriculum track, your modules, live laboratory timetable, and assignments will appear here.
+            </p>
+          </div>
+          <div className="pt-2 flex justify-center gap-3">
+            <Link
+              href="/courses"
+              className="px-4 py-2 rounded-xl bg-[#142541] hover:bg-[#1E375F] text-white text-xs font-semibold transition-colors shadow-xs"
+            >
+              Browse Academy Tracks
+            </Link>
+            <Link
+              href="/student/support"
+              className="px-4 py-2 rounded-xl bg-[#F3F6FA] hover:bg-[#DCE4EE] text-[#142541] text-xs font-semibold transition-colors"
+            >
+              Contact Admissions
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Next Class Hero Banner (Only if an upcoming session is actually scheduled) */}
       {upcomingSession && (
         <div className="rounded-2xl border border-[#3869AD]/30 bg-gradient-to-br from-[#142541] via-[#1B3258] to-[#12223C] text-white p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2.5">
@@ -239,196 +287,216 @@ export default async function StudentDashboardPage() {
         </div>
       )}
 
-      {/* Two Column Layout: Curriculum & Faculty Feedback */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column: Curriculum Tracks & Progress */}
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-[#DCE4EE] bg-white shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-[#DCE4EE] bg-[#F8FAFC] flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-xs uppercase tracking-wider text-[#142541]">
-                  My Curriculum Progress
-                </h3>
-                <p className="text-[11px] text-[#5F6F84] mt-0.5">
-                  {primaryCourse?.title || "Applied AI Track"}
-                </p>
-              </div>
-              <Link
-                href="/student/courses"
-                className="text-xs text-[#3869AD] font-bold hover:underline flex items-center gap-1"
-              >
-                Full Syllabus <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {/* Progress Bar */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#142541]">Track Completion</span>
-                  <span className="font-bold text-[#3869AD]">{progressPercent}%</span>
+      {/* Two Column Layout: Curriculum & Faculty Feedback (if courses exist) */}
+      {courses.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column: Curriculum Tracks & Progress */}
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-[#DCE4EE] bg-white shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-[#DCE4EE] bg-[#F8FAFC] flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-[#142541]">
+                    My Curriculum Progress
+                  </h3>
+                  <p className="text-[11px] text-[#5F6F84] mt-0.5">
+                    {primaryCourse?.title || "Enrolled Curriculum Track"}
+                  </p>
                 </div>
-                <div className="h-2.5 w-full bg-[#E8EFF8] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#3869AD] to-[#168B83] rounded-full transition-all duration-500"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-                <div className="text-[10px] text-[#5F6F84] text-right">
-                  {completedLessons.length || 2} of {totalCourseLessons} lessons marked complete
-                </div>
+                <Link
+                  href="/student/courses"
+                  className="text-xs text-[#3869AD] font-bold hover:underline flex items-center gap-1"
+                >
+                  Full Syllabus <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
 
-              {/* Modules List */}
-              <div className="divide-y divide-[#DCE4EE] border-t border-[#DCE4EE] pt-2 text-xs">
-                {primaryCourse?.modules?.slice(0, 3).map((mod, idx) => (
-                  <div key={mod.id || idx} className="py-3 flex items-start justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <div className="font-bold text-[#142541]">
-                        {mod.title}
-                      </div>
-                      <p className="text-[11px] text-[#5F6F84] line-clamp-1">
-                        {mod.description || "Core computational thinking and algorithmic foundations."}
-                      </p>
-                    </div>
-                    <Badge variant={idx === 0 ? "success" : "teal"} className="shrink-0 text-[10px]">
-                      {idx === 0 ? "Completed" : "In Progress"}
-                    </Badge>
+              <div className="p-5 space-y-4">
+                {/* Progress Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#142541]">Track Completion</span>
+                    <span className="font-bold text-[#3869AD]">{progressPercent}%</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  <div className="h-2.5 w-full bg-[#E8EFF8] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#3869AD] to-[#168B83] rounded-full transition-all duration-500"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-[#5F6F84] text-right">
+                    {completedLessons.length} of {totalCourseLessons} lessons marked complete
+                  </div>
+                </div>
 
-          {/* Instructor & Mentorship Card */}
-          <div className="p-5 rounded-2xl border border-[#DCE4EE] bg-white shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#142541] to-[#3869AD] text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
-              {leadInstructor.full_name.charAt(0)}
-            </div>
-            <div className="space-y-0.5 flex-1 overflow-hidden">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#142541] truncate">{leadInstructor.full_name}</span>
-                <Badge variant="outline" className="text-[10px] text-[#3869AD]">Cohort Faculty</Badge>
-              </div>
-              <p className="text-[11px] text-[#5F6F84] line-clamp-1">{leadInstructor.title}</p>
-              <div className="text-[10px] text-[#168B83] font-semibold pt-0.5">
-                Office Hours: Tue & Thu • 4:00 PM – 5:30 PM IST
-              </div>
-            </div>
-            <Link
-              href="/student/classes"
-              className="text-xs px-3 py-1.5 rounded-lg bg-[#F3F6FA] hover:bg-[#DCE4EE] font-semibold text-[#142541] transition-colors shrink-0"
-            >
-              Ask Query
-            </Link>
-          </div>
-        </div>
+                {/* Modules List with Real Completion Indicators */}
+                <div className="divide-y divide-[#DCE4EE] border-t border-[#DCE4EE] pt-2 text-xs">
+                  {primaryCourse?.modules?.slice(0, 3).map((mod, idx) => {
+                    const completedInMod =
+                      mod.lessons?.filter((l) => completedLessons.includes(l.id)).length || 0;
+                    const totalInMod = mod.lessons?.length || 0;
+                    const isAllDone = totalInMod > 0 && completedInMod === totalInMod;
+                    const isPartial = completedInMod > 0 && completedInMod < totalInMod;
 
-        {/* Right Column: Priority Deliverables & Faculty Reviews */}
-        <div className="space-y-6">
-          {/* Pending Deliverables */}
-          <div className="rounded-2xl border border-[#DCE4EE] bg-white shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-[#DCE4EE] bg-[#F8FAFC] flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-xs uppercase tracking-wider text-[#142541]">
-                  Upcoming Deliverables
-                </h3>
-                <p className="text-[11px] text-[#5F6F84] mt-0.5">
-                  Algorithmic models and lab solutions
-                </p>
+                    return (
+                      <div key={mod.id || idx} className="py-3 flex items-start justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-[#142541]">{mod.title}</div>
+                          <p className="text-[11px] text-[#5F6F84] line-clamp-1">
+                            {mod.description || "Core computational thinking and algorithmic foundations."}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={isAllDone ? "success" : isPartial ? "teal" : "outline"}
+                          className="shrink-0 text-[10px]"
+                        >
+                          {isAllDone ? "Completed" : isPartial ? "In Progress" : "Not Started"}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Instructor & Mentorship Card */}
+            <div className="p-5 rounded-2xl border border-[#DCE4EE] bg-white shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#142541] to-[#3869AD] text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+                {leadInstructor.full_name?.charAt(0) || "F"}
+              </div>
+              <div className="space-y-0.5 flex-1 overflow-hidden">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#142541] truncate">
+                    {leadInstructor.full_name}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] text-[#3869AD]">Cohort Faculty</Badge>
+                </div>
+                <p className="text-[11px] text-[#5F6F84] line-clamp-1">{leadInstructor.bio || "Senior AI & Computer Vision Faculty Mentor"}</p>
+                <div className="text-[10px] text-[#168B83] font-semibold pt-0.5">
+                  Office Hours: Tue & Thu • 4:00 PM – 5:30 PM IST
+                </div>
               </div>
               <Link
-                href="/student/assignments"
-                className="text-xs text-[#3869AD] font-bold hover:underline flex items-center gap-1"
+                href="/student/classes"
+                className="text-xs px-3 py-1.5 rounded-lg bg-[#F3F6FA] hover:bg-[#DCE4EE] font-semibold text-[#142541] transition-colors shrink-0"
               >
-                All Assignments <ArrowRight className="h-3 w-3" />
+                Schedule
               </Link>
             </div>
+          </div>
 
-            <div className="divide-y divide-[#DCE4EE] text-xs">
-              {assignments.slice(0, 3).map((asn) => {
-                const sub = asn.submission;
-                const isGraded = sub?.status === "graded" && sub.is_grade_published;
+          {/* Right Column: Priority Deliverables & Faculty Reviews */}
+          <div className="space-y-6">
+            {/* Pending Deliverables */}
+            <div className="rounded-2xl border border-[#DCE4EE] bg-white shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-[#DCE4EE] bg-[#F8FAFC] flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-[#142541]">
+                    Upcoming Deliverables
+                  </h3>
+                  <p className="text-[11px] text-[#5F6F84] mt-0.5">
+                    Algorithmic models and lab solutions
+                  </p>
+                </div>
+                <Link
+                  href="/student/assignments"
+                  className="text-xs text-[#3869AD] font-bold hover:underline flex items-center gap-1"
+                >
+                  All Assignments <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
 
-                return (
-                  <div key={asn.id} className="p-4 flex items-center justify-between gap-3 hover:bg-[#F8FAFC] transition-colors">
-                    <div className="space-y-1">
-                      <div className="font-bold text-[#142541] flex items-center gap-1.5">
-                        <FileCode2 className="h-3.5 w-3.5 text-[#3869AD]" />
-                        <span>{asn.title}</span>
+              <div className="divide-y divide-[#DCE4EE] text-xs">
+                {assignments.length === 0 ? (
+                  <div className="p-8 text-center text-[#5F6F84] space-y-1">
+                    <div className="font-semibold text-[#142541]">No Pending Assignments</div>
+                    <p className="text-[11px]">All labs and algorithmic deliverables are up to date.</p>
+                  </div>
+                ) : (
+                  assignments.slice(0, 3).map((asn) => {
+                    const sub = asn.submission;
+                    const isGraded = sub?.status === "graded" && sub.is_grade_published;
+
+                    return (
+                      <div key={asn.id} className="p-4 flex items-center justify-between gap-3 hover:bg-[#F8FAFC] transition-colors">
+                        <div className="space-y-1">
+                          <div className="font-bold text-[#142541] flex items-center gap-1.5">
+                            <FileCode2 className="h-3.5 w-3.5 text-[#3869AD]" />
+                            <span>{asn.title}</span>
+                          </div>
+                          <div className="text-[11px] text-[#5F6F84]">
+                            Due: {new Date(asn.due_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {asn.max_score} pts
+                          </div>
+                        </div>
+
+                        <div className="shrink-0">
+                          {isGraded ? (
+                            <Badge variant="success">Graded ({sub.score}/{asn.max_score})</Badge>
+                          ) : sub ? (
+                            <Badge variant="teal">Submitted (In Review)</Badge>
+                          ) : (
+                            <SubmitAssignmentModal
+                              assignmentId={asn.id}
+                              assignmentTitle={asn.title}
+                              maxScore={asn.max_score}
+                            />
+                          )}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-[#5F6F84]">
-                        Due: {new Date(asn.due_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {asn.max_score} pts
-                      </div>
-                    </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
 
-                    <div className="shrink-0">
-                      {isGraded ? (
-                        <Badge variant="success">Graded ({sub.score}/{asn.max_score})</Badge>
-                      ) : sub ? (
-                        <Badge variant="teal">Submitted (In Review)</Badge>
-                      ) : (
-                        <SubmitAssignmentModal
-                          assignmentId={asn.id}
-                          assignmentTitle={asn.title}
-                          maxScore={asn.max_score}
-                        />
+            {/* Released Faculty Feedback */}
+            <div className="rounded-2xl border border-[#DCE4EE] bg-white shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-[#DCE4EE] bg-[#F8FAFC] flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-[#142541]">
+                    Recent Faculty Evaluations
+                  </h3>
+                  <p className="text-[11px] text-[#5F6F84] mt-0.5">
+                    Published grades and code review notes
+                  </p>
+                </div>
+                <Link
+                  href="/student/grades"
+                  className="text-xs text-[#3869AD] font-bold hover:underline flex items-center gap-1"
+                >
+                  Transcripts <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+
+              <div className="divide-y divide-[#DCE4EE] text-xs">
+                {grades.length === 0 ? (
+                  <div className="p-8 text-center text-[#5F6F84] space-y-1">
+                    <div className="font-semibold text-[#142541]">No Evaluations Published Yet</div>
+                    <p className="text-[11px]">Instructor grades appear here once submitted deliverables are audited.</p>
+                  </div>
+                ) : (
+                  grades.slice(0, 2).map((grade) => (
+                    <div key={grade.id} className="p-4 space-y-2 hover:bg-[#F8FAFC] transition-colors">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[#142541]">
+                          {grade.assignment?.title || "Assessment Deliverable"}
+                        </span>
+                        <Badge variant="success" className="font-mono text-xs">
+                          {grade.score} / {grade.assignment?.max_score || 100} pts
+                        </Badge>
+                      </div>
+                      {grade.feedback && (
+                        <p className="text-[11px] text-[#263449] bg-[#F3F6FA] p-3 rounded-xl border border-[#DCE4EE] leading-relaxed italic">
+                          &ldquo;{grade.feedback}&rdquo;
+                        </p>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Released Faculty Feedback */}
-          <div className="rounded-2xl border border-[#DCE4EE] bg-white shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-[#DCE4EE] bg-[#F8FAFC] flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-xs uppercase tracking-wider text-[#142541]">
-                  Recent Faculty Evaluations
-                </h3>
-                <p className="text-[11px] text-[#5F6F84] mt-0.5">
-                  Published grades and code review notes
-                </p>
+                  ))
+                )}
               </div>
-              <Link
-                href="/student/grades"
-                className="text-xs text-[#3869AD] font-bold hover:underline flex items-center gap-1"
-              >
-                Transcripts <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="divide-y divide-[#DCE4EE] text-xs">
-              {grades.length === 0 ? (
-                <div className="p-8 text-center text-[#5F6F84] space-y-1">
-                  <div className="font-semibold text-[#142541]">No Evaluations Published Yet</div>
-                  <p className="text-[11px]">Instructor grades appear here once submitted deliverables are audited.</p>
-                </div>
-              ) : (
-                grades.slice(0, 2).map((grade) => (
-                  <div key={grade.id} className="p-4 space-y-2 hover:bg-[#F8FAFC] transition-colors">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#142541]">
-                        {grade.assignment?.title || "Assessment Deliverable"}
-                      </span>
-                      <Badge variant="success" className="font-mono text-xs">
-                        {grade.score} / {grade.assignment?.max_score || 100} pts
-                      </Badge>
-                    </div>
-                    {grade.feedback && (
-                      <p className="text-[11px] text-[#263449] bg-[#F3F6FA] p-3 rounded-xl border border-[#DCE4EE] leading-relaxed italic">
-                        &ldquo;{grade.feedback}&rdquo;
-                      </p>
-                    )}
-                  </div>
-                ))
-              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

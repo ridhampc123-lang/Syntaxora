@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   openGraph: {
     title: "Syntaxora — AI Learning Academy",
-    description: "Practical artificial intelligence and robotics education for kids, teens, and adults.",
+    description: "Practical artificial intelligence, machine learning, and computer vision education for kids, teens, and adults.",
     siteName: "Syntaxora",
     type: "website",
     images: [

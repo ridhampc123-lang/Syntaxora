@@ -116,8 +116,32 @@ export function getStudentAdmissionSetupEmail(
   studentName: string,
   studentCode: string,
   setupUrl: string,
-  temporaryPassword = "StudentPassword123!"
+  temporaryPassword = "StudentPassword123!",
+  batchDetails?: { batchName: string; schedule?: string; instructor?: string }
 ): { subject: string; html: string; text: string } {
+  const batchHtml = batchDetails
+    ? `
+        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <div style="font-size: 11px; text-transform: uppercase; color: #166534; font-weight: bold; letter-spacing: 0.05em;">Your Assigned Cohort & Live Class Schedule</div>
+          <div style="font-size: 15px; font-weight: bold; color: #14532D; margin-top: 4px;">${batchDetails.batchName}</div>
+          ${
+            batchDetails.schedule
+              ? `<div style="font-size: 13px; color: #15803D; margin-top: 4px;">Class Times: <strong>${batchDetails.schedule}</strong></div>`
+              : ""
+          }
+          ${
+            batchDetails.instructor
+              ? `<div style="font-size: 12px; color: #166534; margin-top: 4px;">Faculty Mentor: <strong>${batchDetails.instructor}</strong></div>`
+              : ""
+          }
+        </div>
+      `
+    : "";
+
+  const batchText = batchDetails
+    ? `\nAssigned Cohort: ${batchDetails.batchName}${batchDetails.schedule ? `\nClass Times: ${batchDetails.schedule}` : ""}${batchDetails.instructor ? `\nFaculty: ${batchDetails.instructor}` : ""}`
+    : "";
+
   return {
     subject: `Admission Approved: Set Up Your Syntaxora Student Account (${studentCode})`,
     html: `
@@ -126,6 +150,7 @@ export function getStudentAdmissionSetupEmail(
         <p style="color: #5F6F84; font-size: 14px; line-height: 1.5;">
           Congratulations <strong>${studentName}</strong>! Your application for admission has been approved by our academic faculty.
         </p>
+        ${batchHtml}
         <div style="background-color: #F3F6FA; border: 1px solid #DCE4EE; padding: 16px; border-radius: 8px; margin: 20px 0;">
           <div style="font-size: 11px; text-transform: uppercase; color: #5F6F84; font-weight: bold; letter-spacing: 0.05em;">Your Permanent Student Code</div>
           <div style="font-size: 20px; font-family: monospace; font-weight: bold; color: #3869AD; margin-top: 4px;">${studentCode}</div>
@@ -148,7 +173,7 @@ export function getStudentAdmissionSetupEmail(
         </p>
       </div>
     `,
-    text: `Congratulations ${studentName}! Your Syntaxora application has been approved. Your Student Code is: ${studentCode}. Temporary Password: ${temporaryPassword}. Sign in here: ${setupUrl}`,
+    text: `Congratulations ${studentName}! Your Syntaxora application has been approved.${batchText}\nYour Student Code is: ${studentCode}.\nTemporary Password: ${temporaryPassword}.\nSign in here: ${setupUrl}`,
   };
 }
 

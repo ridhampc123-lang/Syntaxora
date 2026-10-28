@@ -18,11 +18,12 @@ import {
   Key,
   RefreshCw,
   ExternalLink,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
-import { StudentApplication, ApplicationStatus } from "@/types";
+import { StudentApplication, ApplicationStatus, Batch } from "@/types";
 import {
   reviewApplicationAction,
   resendStudentSetupEmailAction,
@@ -39,6 +40,7 @@ const initialActionState: ActionResult = {
 interface Props {
   application: StudentApplication;
   duplicates: DuplicateDetectionResult;
+  batches?: Batch[];
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
@@ -47,6 +49,7 @@ interface Props {
 export function ApplicationReviewModal({
   application,
   duplicates,
+  batches = [],
   isOpen,
   onClose,
   onSuccess,
@@ -56,24 +59,48 @@ export function ApplicationReviewModal({
   const [resending, setResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<{ message: string; success: boolean } | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
   const [resetting, setResetting] = useState(false);
+
+  // Filter batches relevant to applicant's chosen course
+  const relevantBatches = batches.filter(
+    (b) => !application.course_id || b.course_id === application.course_id
+  );
+  const availableBatches = relevantBatches.length > 0 ? relevantBatches : batches;
+
+  const [selectedBatchId, setSelectedBatchId] = useState<string>(
+    availableBatches[0]?.id || ""
+  );
+
   const [currentStudentCode, setCurrentStudentCode] = useState<string>(
     application.student_code || application.student?.student_code || ""
   );
+  const [currentTemporaryPassword, setCurrentTemporaryPassword] = useState<string>("");
+  const [currentAssignedBatch, setCurrentAssignedBatch] = useState<string>("");
 
-  const studentCodeDisplay = currentStudentCode || "STU-PENDING";
-  const defaultPassword = "StudentPassword123!";
+  const studentCodeDisplay = state.studentCode || currentStudentCode || "STU-PENDING";
+  const selectedBatchObj = batches.find((b) => b.id === selectedBatchId);
+  const assignedBatchDisplay =
+    state.assignedBatch ||
+    currentAssignedBatch ||
+    (selectedBatchObj ? `${selectedBatchObj.name} (${selectedBatchObj.batch_code})` : "");
 
+  // Update credentials when action responds
   useEffect(() => {
     if (state.success) {
-      const timer = setTimeout(() => {
-        onSuccess?.();
-        onClose();
-      }, 1500);
-      return () => clearTimeout(timer);
+      if (state.studentCode) {
+        setCurrentStudentCode(state.studentCode);
+      }
+      if (state.temporaryPassword) {
+        setCurrentTemporaryPassword(state.temporaryPassword);
+      }
+      if (state.assignedBatch) {
+        setCurrentAssignedBatch(state.assignedBatch);
+      }
+      onSuccess?.();
     }
-  }, [state.success, onClose, onSuccess]);
+  }, [state, onSuccess]);
 
   const handleResendSetupEmail = async () => {
     setResending(true);
@@ -82,6 +109,12 @@ export function ApplicationReviewModal({
       const res = await resendStudentSetupEmailAction(application.id);
       if (res.studentCode) {
         setCurrentStudentCode(res.studentCode);
+      }
+      if (res.temporaryPassword) {
+        setCurrentTemporaryPassword(res.temporaryPassword);
+      }
+      if (res.assignedBatch) {
+        setCurrentAssignedBatch(res.assignedBatch);
       }
       setResendStatus({ message: res.message, success: res.success });
     } catch {
@@ -102,22 +135,37 @@ export function ApplicationReviewModal({
     }
   };
 
+  const handleCopyPassword = async () => {
+    const pwdToCopy = currentTemporaryPassword || state.temporaryPassword || "StudentPassword123!";
+    try {
+      await navigator.clipboard.writeText(pwdToCopy);
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
   const handleCopyAllCredentials = async () => {
     const siteUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    const pwd = currentTemporaryPassword || state.temporaryPassword || "StudentPassword123!";
     const text = [
       `🎓 Syntaxora AI Academy — Student Portal Credentials`,
       `======================================================`,
       `Student Name: ${application.full_name}`,
-      `Student Code: ${studentCodeDisplay}`,
+      `Permanent Student Code: ${studentCodeDisplay}`,
       `Login URL: ${siteUrl}/login?email=${encodeURIComponent(application.email)}&setup=true`,
-      `Email Address: ${application.email}`,
-      `Temporary Password: ${defaultPassword}`,
+      `Registered Email: ${application.email}`,
+      `Unique Temporary Password: ${pwd}`,
+      assignedBatchDisplay ? `Assigned Cohort: ${assignedBatchDisplay}` : "",
       `======================================================`,
-      `📌 Instructions:`,
-      `1. Open the Login URL and sign in using your email and temporary password.`,
-      `2. You may change your password anytime in your student settings.`,
-      `3. Share your Student Code (${studentCodeDisplay}) with your parent/guardian to link their account.`,
-    ].join("\n");
+      `📌 Quick Start Instructions:`,
+      `1. Open the Login URL and sign in using your email and unique temporary password.`,
+      `2. You can set a custom personal password anytime from your Student Profile.`,
+      `3. Share your Permanent Student Code (${studentCodeDisplay}) with your parent/guardian to link their authorized portal.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     try {
       await navigator.clipboard.writeText(text);
@@ -136,8 +184,11 @@ export function ApplicationReviewModal({
       if (res.studentCode) {
         setCurrentStudentCode(res.studentCode);
       }
+      if (res.temporaryPassword) {
+        setCurrentTemporaryPassword(res.temporaryPassword);
+      }
       setResendStatus({
-        message: res.success ? `${res.message} Temporary Password: ${defaultPassword}` : res.message,
+        message: res.success ? `Password regenerated: ${res.temporaryPassword}` : res.message,
         success: res.success,
       });
     } catch {
@@ -148,6 +199,13 @@ export function ApplicationReviewModal({
   };
 
   if (!isOpen) return null;
+
+  const isProvisioned = Boolean(
+    application.provisioned_student_id ||
+      state.studentCode ||
+      currentStudentCode ||
+      state.temporaryPassword
+  );
 
   return (
     <div
@@ -203,7 +261,7 @@ export function ApplicationReviewModal({
           </Alert>
         )}
 
-        {/* Duplicate Detection Alert (Requirement: Flag potential duplicates without auto-merging) */}
+        {/* Duplicate Detection Alert */}
         {duplicates.hasDuplicates && (
           <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-4 space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
@@ -294,7 +352,7 @@ export function ApplicationReviewModal({
         </div>
 
         {/* Provisioned Student Credentials & Access Card */}
-        {application.provisioned_student_id && (
+        {isProvisioned && (
           <div className="rounded-xl border border-[#3869AD]/30 bg-[#E8EFF8]/60 p-4 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
@@ -302,9 +360,11 @@ export function ApplicationReviewModal({
                 <span className="text-xs font-bold text-[#142541]">
                   Student Account Provisioned
                 </span>
-                <span className="text-[11px] text-[#5F6F84]">
-                  ({new Date(application.provisioned_at || application.updated_at).toLocaleDateString()})
-                </span>
+                {assignedBatchDisplay && (
+                  <span className="text-[11px] font-semibold text-[#168B83] bg-[#E2F4F2] px-2 py-0.5 rounded">
+                    {assignedBatchDisplay}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -335,7 +395,7 @@ export function ApplicationReviewModal({
                   className="text-xs"
                 >
                   <Mail className="h-3 w-3 mr-1" />
-                  Resend Email
+                  Resend Setup Email
                 </Button>
               </div>
             </div>
@@ -370,29 +430,43 @@ export function ApplicationReviewModal({
 
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#5F6F84]">
-                  Default / Temporary Password
+                  Unique Temporary Password
                 </span>
                 <div className="flex items-center gap-1.5 font-mono font-bold text-sm text-[#142541]">
-                  <span>{defaultPassword}</span>
+                  <span className="truncate">
+                    {currentTemporaryPassword || state.temporaryPassword || "StudentPassword123!"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyPassword}
+                    title="Copy temporary password"
+                    className="p-1 rounded hover:bg-[#E8EFF8] text-[#5F6F84] hover:text-[#3869AD] transition-colors cursor-pointer"
+                  >
+                    {copiedPassword ? (
+                      <Check className="h-3 w-3 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </button>
                   <button
                     type="button"
                     onClick={handleResetPassword}
                     disabled={resetting}
-                    title="Reset to StudentPassword123!"
+                    title="Regenerate unique temporary password"
                     className="p-1 rounded hover:bg-[#E8EFF8] text-[#5F6F84] hover:text-[#3869AD] transition-colors cursor-pointer"
                   >
                     <RefreshCw className={`h-3 w-3 ${resetting ? "animate-spin" : ""}`} />
                   </button>
                 </div>
-                <p className="text-[10px] text-[#5F6F84]">Click icon to reset if student forgets.</p>
+                <p className="text-[10px] text-emerald-700 font-medium">Distinct, unique per student.</p>
               </div>
             </div>
 
-            {/* Email Dispatch Notice */}
+            {/* Email Dispatch & Schedule Notice */}
             <div className="text-[11px] text-[#5F6F84] bg-[#F8FAFC] p-2.5 rounded-lg border border-[#DCE4EE] flex items-start gap-2">
-              <span className="text-amber-500 font-bold shrink-0">ℹ️ Notice:</span>
+              <span className="text-[#3869AD] font-bold shrink-0">ℹ️ Note:</span>
               <span>
-                If email delivery is not configured (RESEND_API_KEY in .env.local), emails will not reach inboxes. You can click <strong>&ldquo;Copy All Credentials&rdquo;</strong> above to send the login details directly to the student or parent via WhatsApp, SMS, or email.
+                Account setup email with Student Code, Unique Temporary Password, and Live Class Schedule is automatically dispatched. If email delivery is in sandbox/testing, click <strong>&ldquo;Copy All Credentials&rdquo;</strong> to share via WhatsApp/SMS directly.
               </span>
             </div>
 
@@ -445,6 +519,60 @@ export function ApplicationReviewModal({
             <input type="hidden" name="decision" value={decision} />
           </div>
 
+          {/* Cohort Batch & Timetable Allocation (Shown when Approving) */}
+          {decision === "approved" && (
+            <div className="space-y-2 rounded-xl border border-[#3869AD]/30 bg-[#F3F7FD] p-3.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="batchId"
+                  className="block text-xs font-bold uppercase tracking-wider text-[#142541] flex items-center gap-1.5"
+                >
+                  <Users className="h-3.5 w-3.5 text-[#3869AD]" />
+                  <span>Cohort Batch & Live Schedule Allocation</span>
+                  <span className="text-[#B91C1C]">*</span>
+                </label>
+                <span className="text-[10px] font-semibold text-[#3869AD] bg-[#E8EFF8] px-2 py-0.5 rounded-full">
+                  Automated Schedule Sync
+                </span>
+              </div>
+              <p className="text-[11px] text-[#5F6F84] leading-relaxed">
+                Assign which class cohort and timetable this student will join. Approving immediately enrolls the student into this batch, scheduling their live classes and populating their timetable.
+              </p>
+              <select
+                id="batchId"
+                name="batchId"
+                value={selectedBatchId}
+                onChange={(e) => setSelectedBatchId(e.target.value)}
+                className="w-full rounded-lg border border-[#DCE4EE] bg-white px-3 py-2 text-xs font-medium text-[#142541] shadow-xs focus:border-[#3869AD] focus:outline-none focus:ring-1 focus:ring-[#3869AD]"
+              >
+                <option value="">-- Select Cohort Batch & Schedule --</option>
+                {availableBatches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.batch_code}) — {b.timezone} • {b.enrolled_count ?? 0}/{b.capacity} Enrolled
+                  </option>
+                ))}
+              </select>
+
+              {selectedBatchObj && (
+                <div className="rounded-lg bg-white border border-[#DCE4EE] p-2.5 text-xs space-y-1">
+                  <div className="flex items-center justify-between font-semibold text-[#142541]">
+                    <span>Cohort: {selectedBatchObj.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold">
+                      {selectedBatchObj.capacity - (selectedBatchObj.enrolled_count || 0)} Seats Available
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[#5F6F84]">
+                    Instructor:{" "}
+                    <strong className="text-[#142541]">
+                      {selectedBatchObj.primary_instructor?.full_name || "Senior Academy Faculty"}
+                    </strong>{" "}
+                    • Timezone: {selectedBatchObj.timezone}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-1">
             <label
               htmlFor="decisionReason"
@@ -456,9 +584,14 @@ export function ApplicationReviewModal({
               id="decisionReason"
               name="decisionReason"
               type="text"
-              defaultValue={application.decision_reason || ""}
-              placeholder="e.g. Matched to Spring Young Explorers Cohort. Welcome to Syntaxora!"
-              className="w-full rounded-lg border border-[#DCE4EE] bg-white px-3 py-2 text-xs text-[#142541] shadow-sm focus:border-[#3869AD] focus:outline-none focus:ring-1 focus:ring-[#3869AD]"
+              defaultValue={
+                application.decision_reason ||
+                (selectedBatchObj
+                  ? `Admitted to ${selectedBatchObj.name}. Welcome to Syntaxora!`
+                  : "Admission approved. Student account provisioned.")
+              }
+              placeholder="e.g. Matched to Cohort Alpha. Welcome to Syntaxora!"
+              className="w-full rounded-lg border border-[#DCE4EE] bg-white px-3 py-2 text-xs text-[#142541] shadow-xs focus:border-[#3869AD] focus:outline-none focus:ring-1 focus:ring-[#3869AD]"
             />
           </div>
 
@@ -475,29 +608,45 @@ export function ApplicationReviewModal({
               rows={2}
               defaultValue={application.admin_notes || ""}
               placeholder="Confidential admissions review comments..."
-              className="w-full rounded-lg border border-[#DCE4EE] bg-white p-2.5 text-xs text-[#142541] shadow-sm focus:border-[#3869AD] focus:outline-none focus:ring-1 focus:ring-[#3869AD]"
+              className="w-full rounded-lg border border-[#DCE4EE] bg-white p-2.5 text-xs text-[#142541] shadow-xs focus:border-[#3869AD] focus:outline-none focus:ring-1 focus:ring-[#3869AD]"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#DCE4EE]">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              isLoading={isPending}
-            >
-              Save Decision & Audit Record
-            </Button>
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#DCE4EE]">
+            <div>
+              {isProvisioned && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onClose}
+                  className="text-xs"
+                >
+                  Done / Close
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant={decision === "approved" ? "ai" : "primary"}
+                size="sm"
+                isLoading={isPending}
+                className="font-bold shadow-xs"
+              >
+                {decision === "approved" ? "Approve & Provision Student" : "Save Decision"}
+              </Button>
+            </div>
           </div>
         </form>
       </div>

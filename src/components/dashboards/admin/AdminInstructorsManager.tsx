@@ -300,7 +300,7 @@ export function AdminInstructorsManager({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search faculty by name, email, title, or specialty (e.g. PyTorch, Robotics)..."
+            placeholder="Search faculty by name, email, title, or specialty (e.g. PyTorch, Computer Vision)..."
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#DCE4EE] bg-white text-xs text-[#142541] placeholder-[#5F6F84] focus:outline-none focus:ring-2 focus:ring-[#355F99]"
           />
         </div>
@@ -540,7 +540,7 @@ export function AdminInstructorsManager({
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Lead Robotics & Computer Vision Faculty"
+                  placeholder="e.g. Lead AI & Computer Vision Faculty"
                   className="w-full px-3.5 py-2 rounded-xl border border-[#DCE4EE] text-xs text-[#142541] focus:outline-none focus:ring-2 focus:ring-[#355F99]"
                 />
               </div>

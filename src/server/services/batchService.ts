@@ -21,7 +21,7 @@ export const IN_MEMORY_BATCHES: (Batch & { enrolled_students?: Student[] })[] = 
   {
     id: "b1000000-0000-0000-0000-000000000001",
     course_id: "c1000000-0000-0000-0000-000000000001",
-    name: "Teens AI Robotics — Cohort Alpha (Morning)",
+    name: "Teens Python & AI — Cohort Alpha (Morning)",
     batch_code: "BAT-AIR-01",
     primary_instructor_profile_id: "i1000000-0000-0000-0000-000000000001",
     capacity: 20,

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useActionState } from "react";
-import { Link2, ShieldCheck } from "lucide-react";
+import React, { useActionState, useEffect } from "react";
+import { Link2, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { requestStudentLinkAction, type GuardianActionResult } from "@/server/actions/guardian";
@@ -11,24 +11,44 @@ const initialActionState: GuardianActionResult = {
   message: "",
 };
 
-export function LinkStudentForm() {
+interface Props {
+  isModal?: boolean;
+  onSuccess?: () => void;
+}
+
+export function LinkStudentForm({ isModal = false, onSuccess }: Props) {
   const [state, formAction, isPending] = useActionState(requestStudentLinkAction, initialActionState);
 
+  useEffect(() => {
+    if (state.success && onSuccess) {
+      const timer = setTimeout(() => {
+        onSuccess();
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [state.success, onSuccess]);
+
+  const containerClasses = isModal
+    ? "space-y-4"
+    : "rounded-2xl border border-[#DCE4EE] bg-white p-6 shadow-sm space-y-5";
+
   return (
-    <div className="rounded-2xl border border-[#DCE4EE] bg-white p-6 shadow-sm space-y-5">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center">
-            <Link2 className="h-4 w-4" />
+    <div className={containerClasses}>
+      {!isModal && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center">
+              <Link2 className="h-4 w-4" />
+            </div>
+            <h3 className="text-base font-bold text-[#142541]">
+              Link a Student / Connect Your Child
+            </h3>
           </div>
-          <h3 className="text-base font-bold text-[#142541]">
-            Link a Student / Connect Your Child
-          </h3>
+          <p className="text-xs text-[#5F6F84] leading-relaxed">
+            Enter the permanent student code provided by your child or admissions counselor to request authorized guardian access.
+          </p>
         </div>
-        <p className="text-xs text-[#5F6F84] leading-relaxed">
-          Enter the permanent student code provided by your child or admissions counselor to request authorized guardian access.
-        </p>
-      </div>
+      )}
 
       {state.message && (
         <Alert variant={state.success ? "success" : "error"}>
@@ -50,12 +70,15 @@ export function LinkStudentForm() {
             type="text"
             required
             placeholder="e.g. STU-8F39A1C2"
-            maxLength={12}
+            maxLength={14}
             className="w-full rounded-lg border border-[#DCE4EE] bg-white px-3.5 py-2.5 font-mono text-xs text-[#142541] uppercase tracking-wider shadow-2xs focus:border-[#3869AD] focus:outline-none focus:ring-1 focus:ring-[#3869AD]"
           />
           {state.errors?.studentCode && (
             <p className="text-xs text-[#B91C1C] mt-1">{state.errors.studentCode[0]}</p>
           )}
+          <p className="text-[11px] text-[#5F6F84]">
+            Enter the permanent student code provided by your child or admissions counselor.
+          </p>
         </div>
 
         <div className="space-y-1.5">
@@ -81,19 +104,25 @@ export function LinkStudentForm() {
         <div className="rounded-xl border border-[#3869AD]/20 bg-[#E8EFF8]/40 p-3.5 text-xs text-[#3869AD] flex items-start gap-2.5">
           <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-[#3869AD]" />
           <p className="leading-relaxed text-[11px] text-[#263449]">
-            <strong>Zero-Trust Child Protection:</strong> Student codes identify a student but do not grant immediate data access. Your connection request must be verified by academy admissions before private learning and attendance records are unlocked.
+            <strong>Zero-Trust Child Protection:</strong> Student codes identify a student record securely without revealing identity. Private records are only unlocked once verified by academy administration.
           </p>
         </div>
 
-        <div className="pt-2">
+        <div className="pt-2 flex items-center justify-end">
           <Button
             type="submit"
             variant="primary"
             size="md"
             isLoading={isPending}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto font-bold"
           >
-            Submit Connection Request
+            {state.success ? (
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4" /> Request Submitted Successfully!
+              </span>
+            ) : (
+              "Connect Sibling / Student"
+            )}
           </Button>
         </div>
       </form>

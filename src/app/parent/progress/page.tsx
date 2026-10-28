@@ -10,13 +10,19 @@ import {
   Download,
   ShieldCheck,
   TrendingUp,
+  HelpCircle,
 } from "lucide-react";
 import { requireRole } from "@/server/services/authService";
 import { getActiveChildrenForGuardian } from "@/server/services/guardianService";
-import { getStudentReleasedGrades } from "@/server/services/studentService";
+import {
+  getStudentReleasedGrades,
+  getStudentCourses,
+  getStudentCompletedLessons,
+} from "@/server/services/studentService";
 import { ParentChildSelector } from "@/components/forms/ParentChildSelector";
+import { LinkStudentModal } from "@/components/forms/LinkStudentModal";
+import { PrintButton } from "@/components/ui/PrintButton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 export const metadata = {
   title: "Child Academic Evaluations & Grades — Syntaxora Guardian",
@@ -39,8 +45,19 @@ export default async function ParentProgressPage({ searchParams }: Props) {
 
   if (!activeRel) {
     return (
-      <div className="p-12 text-center text-xs text-[#5F6F84] bg-white rounded-2xl border border-[#DCE4EE]">
-        No active verified student links found.
+      <div className="max-w-xl mx-auto py-12 text-center space-y-4 bg-white rounded-3xl border border-[#DCE4EE] p-8 shadow-xs">
+        <div className="mx-auto h-14 w-14 rounded-2xl bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center">
+          <Award className="h-7 w-7" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-lg font-bold text-[#142541]">No Active Student Connected</h2>
+          <p className="text-xs text-[#5F6F84] max-w-sm mx-auto leading-relaxed">
+            Link your child using their unique student code to unlock authenticated academic rubrics, evaluation scores, and faculty feedback.
+          </p>
+        </div>
+        <div className="pt-2 flex justify-center">
+          <LinkStudentModal buttonText="Link Your Child Now" variant="primary" size="md" />
+        </div>
       </div>
     );
   }
@@ -67,53 +84,24 @@ export default async function ParentProgressPage({ searchParams }: Props) {
     );
   }
 
-  const rawGrades = await getStudentReleasedGrades(activeRel.student_id);
+  // Real released grades only (strictly is_grade_published === true)
+  const [grades, courses, completedLessonIds] = await Promise.all([
+    getStudentReleasedGrades(activeRel.student_id),
+    getStudentCourses(activeRel.student_id),
+    getStudentCompletedLessons(activeRel.student_id),
+  ]);
 
-  // Fallback demo rubrics if student is newly admitted
-  const sampleGrades = [
-    {
-      id: "grd-101",
-      score: 96,
-      feedback: "Exceptional mastery of PyTorch tensor transformations. The real-time camera inference pipeline achieved an impressive 42 FPS on edge hardware. Code is modular and adheres strictly to PEP-8 standards.",
-      graded_at: "2026-10-21T14:30:00Z",
-      instructor_name: "Dr. Elena Vance",
-      assignment: {
-        title: "Milestone 1: Custom YOLOv8 Bounding Box Pipeline",
-        max_score: 100,
-        due_at: "2026-10-20T23:59:00Z",
-      },
-      rubrics: [
-        { criterion: "Model Convergence & Loss Minimization", score: 25, max: 25 },
-        { criterion: "Edge Inference Efficiency & FPS", score: 24, max: 25 },
-        { criterion: "Code Architecture & Repository Documentation", score: 24, max: 25 },
-        { criterion: "Oral Project Defense & Live Q&A", score: 23, max: 25 },
-      ],
-    },
-    {
-      id: "grd-102",
-      score: 94,
-      feedback: "Implemented spatial kinematics matrices accurately with zero gimbal lock. Demonstrated sophisticated debugging techniques when handling ultrasonic sensor noise.",
-      graded_at: "2026-10-07T16:00:00Z",
-      instructor_name: "Marcus Sterling",
-      assignment: {
-        title: "Lab Assessment 2: 3-DOF Robotic Arm Trajectory Planning",
-        max_score: 100,
-        due_at: "2026-10-05T23:59:00Z",
-      },
-      rubrics: [
-        { criterion: "Matrix Math & Coordinate Transformations", score: 24, max: 25 },
-        { criterion: "Microcontroller Serial Communication", score: 23, max: 25 },
-        { criterion: "Error Handling & Sensor Calibration", score: 24, max: 25 },
-        { criterion: "Physical Hardware Demonstration", score: 23, max: 25 },
-      ],
-    },
-  ];
+  const totalLessons = courses.reduce(
+    (acc, c) => acc + (c.modules?.reduce((macc, m) => macc + (m.lessons?.length || 0), 0) || 0),
+    0
+  );
+  const completedLessonsCount = completedLessonIds.length;
+  const progressPercent = totalLessons > 0 ? Math.round((completedLessonsCount / totalLessons) * 100) : 0;
 
-  const grades = rawGrades.length > 0 ? rawGrades : sampleGrades;
   const avgScore =
     grades.length > 0
       ? Math.round(grades.reduce((acc, g) => acc + (g.score || 0), 0) / grades.length)
-      : 95;
+      : null;
 
   return (
     <div className="space-y-8">
@@ -129,7 +117,7 @@ export default async function ParentProgressPage({ searchParams }: Props) {
             Academic Performance: {studentName}
           </h1>
           <p className="text-xs text-[#5F6F84] mt-0.5">
-            Student Code: <strong className="font-mono text-[#3869AD]">{studentCode}</strong> • Official faculty rubrics and qualitative assessment feedback.
+            Student Code: <strong className="font-mono text-[#3869AD]">{studentCode}</strong> • Official faculty rubrics and released evaluation scores.
           </p>
         </div>
 
@@ -138,159 +126,223 @@ export default async function ParentProgressPage({ searchParams }: Props) {
             relationships={relationships}
             selectedChildId={activeRel.student_id}
           />
-          <Button
-            type="button"
+          <LinkStudentModal
+            buttonText="+ Link Sibling"
             variant="outline"
             size="sm"
-            onClick={() => {
-              if (typeof window !== "undefined") window.print();
-            }}
-            className="text-xs font-semibold"
-          >
-            <Download className="h-3.5 w-3.5 mr-1" />
-            Print Report Card
-          </Button>
+          />
+          <PrintButton
+            label="Print Report Card"
+            icon="printer"
+            variant="outline"
+            size="sm"
+          />
         </div>
       </div>
 
-      {/* Evaluation Performance Metrics Header */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-[#10233D] to-[#142541] text-white shadow-md space-y-1">
-          <div className="flex items-center justify-between text-[#93A5C2]">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Cohort GPA Average</span>
-            <Award className="h-4 w-4 text-[#00E5FF]" />
+      {/* Top Academic Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Published Average Score */}
+        <div className="p-5 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[#5F6F84] text-xs font-semibold">
+            <span>Faculty Evaluations Average</span>
+            <Award className="h-4 w-4 text-[#3869AD]" />
           </div>
-          <div className="text-3xl font-black text-white">{avgScore}%</div>
-          <p className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" />
-            Top 5% Cohort Percentile
+          <div className="text-2xl sm:text-3xl font-black text-[#142541]">
+            {avgScore !== null ? `${avgScore} / 100` : "—"}
+          </div>
+          <p className="text-[11px] text-[#5F6F84]">
+            {avgScore !== null ? "Average of published project reviews" : "No evaluations published yet"}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-[#5F6F84]">
-            <span className="text-[11px] font-bold uppercase">Released Reviews</span>
-            <FileText className="h-4 w-4 text-[#3869AD]" />
+        {/* Published Reviews Count */}
+        <div className="p-5 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[#5F6F84] text-xs font-semibold">
+            <span>Released Grades</span>
+            <FileText className="h-4 w-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-black text-[#142541]">{grades.length} Assessments</div>
-          <p className="text-[10px] text-[#5F6F84]">Published by faculty mentors</p>
+          <div className="text-2xl sm:text-3xl font-black text-emerald-700">
+            {grades.length}
+          </div>
+          <p className="text-[11px] text-[#5F6F84]">
+            Evaluations finalized and published
+          </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-emerald-700">
-            <span className="text-[11px] font-bold uppercase">Assignments On-Time</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+        {/* Syllabus Lessons Completed */}
+        <div className="p-5 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[#5F6F84] text-xs font-semibold">
+            <span>Curriculum Progress</span>
+            <TrendingUp className="h-4 w-4 text-sky-600" />
           </div>
-          <div className="text-2xl font-black text-emerald-700">100%</div>
-          <p className="text-[10px] text-[#5F6F84]">Zero overdue submissions</p>
+          <div className="text-2xl sm:text-3xl font-black text-sky-700">
+            {progressPercent}%
+          </div>
+          <p className="text-[11px] text-[#5F6F84]">
+            {completedLessonsCount} of {totalLessons} curriculum units
+          </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-[#3869AD]">
-            <span className="text-[11px] font-bold uppercase">Accredited Standing</span>
-            <ShieldCheck className="h-4 w-4 text-[#3869AD]" />
+        {/* Enrolled Courses */}
+        <div className="p-5 rounded-2xl bg-white border border-[#DCE4EE] shadow-xs space-y-1">
+          <div className="flex items-center justify-between text-[#5F6F84] text-xs font-semibold">
+            <span>Enrolled Programs</span>
+            <BookOpen className="h-4 w-4 text-[#168B83]" />
           </div>
-          <div className="text-lg font-black text-[#142541] mt-1">High Honors</div>
-          <p className="text-[10px] text-emerald-600 font-semibold">Ready for capstone defense</p>
+          <div className="text-2xl sm:text-3xl font-black text-[#142541]">
+            {courses.length}
+          </div>
+          <p className="text-[11px] text-[#5F6F84]">
+            Active accredited courses
+          </p>
         </div>
       </div>
 
-      {/* Detailed Rubric Assessment Cards */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-[#E2F4F2] text-[#168B83]">
-              <Sparkles className="h-4 w-4" />
-            </div>
+      {/* Curriculum Module Progress Bar */}
+      {courses.length > 0 && (
+        <div className="rounded-3xl border border-[#DCE4EE] bg-white p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#F0F4F8]">
             <div>
-              <h3 className="text-base font-bold text-[#142541]">
-                Published Evaluations & Rubrics
+              <h3 className="text-sm font-bold text-[#142541]">
+                Syllabus Unit Completion Tracking
               </h3>
-              <p className="text-[11px] text-[#5F6F84]">
-                Detailed breakdown across algorithmic accuracy, code quality, and live demonstration.
+              <p className="text-xs text-[#5F6F84]">
+                Completed laboratory notebooks and coding lecture completions verified on learner account.
               </p>
             </div>
+            <span className="text-xs font-bold text-[#168B83]">
+              {completedLessonsCount} of {totalLessons} Units Completed ({progressPercent}%)
+            </span>
+          </div>
+
+          <div className="w-full bg-[#E8EFF8] h-3 rounded-full overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-[#168B83] to-[#3869AD] h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.max(progressPercent, totalLessons > 0 ? 5 : 0))}%` }}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {courses.map((course) => (
+              <div key={course.id} className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#DCE4EE] space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#142541] truncate max-w-xs">{course.title}</span>
+                  <Badge variant="teal">{course.level.toUpperCase()}</Badge>
+                </div>
+                <div className="text-[11px] text-[#5F6F84]">
+                  Modules: {course.modules?.length || 0} • Duration: {course.duration_weeks} Weeks
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Released Project Evaluations & Qualitative Faculty Feedback */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold text-[#142541] flex items-center gap-2">
+              <Award className="h-5 w-5 text-[#3869AD]" />
+              Officially Released Evaluations ({grades.length})
+            </h3>
+            <p className="text-xs text-[#5F6F84]">
+              Grades published by faculty instructors with written qualitative rubrics.
+            </p>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {grades.map((grade) => (
-            <div
-              key={grade.id}
-              className="rounded-3xl border border-[#DCE4EE] bg-white p-6 shadow-sm space-y-5 hover:shadow-md transition-shadow"
-            >
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#DCE4EE]">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-mono text-[#3869AD] font-bold bg-[#E8EFF8] px-2 py-0.5 rounded">
-                      ASSESSMENT #{grade.id.toUpperCase()}
-                    </span>
-                    <span className="text-[11px] text-[#5F6F84]">
-                      Graded on: {grade.graded_at ? new Date(grade.graded_at).toLocaleDateString() : "Recently"}
-                    </span>
-                  </div>
-                  <h3 className="font-extrabold text-base text-[#142541]">
-                    {grade.assignment?.title || "Project Assessment"}
-                  </h3>
-                </div>
+        {grades.length > 0 ? (
+          <div className="space-y-4">
+            {grades.map((grade) => {
+              const maxScore = grade.assignment?.max_score || 100;
+              const pct = Math.round(((grade.score || 0) / maxScore) * 100);
 
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className="text-2xl font-black text-emerald-700">
-                      {grade.score} <span className="text-xs font-normal text-[#5F6F84]">/ {grade.assignment?.max_score || 100}</span>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
-                      Grade A (90%+)
-                    </span>
-                  </div>
-                  <Badge variant="success" className="px-3 py-1 font-bold text-xs">
-                    Approved Release
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Rubric Breakdown Grid if available */}
-              {"rubrics" in grade && Array.isArray((grade as unknown as { rubrics: Array<{ criterion: string; score: number; max: number }> }).rubrics) && (
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#142541]">
-                    Multi-Factor Rubric Breakdown
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {((grade as unknown as { rubrics: Array<{ criterion: string; score: number; max: number }> }).rubrics).map((r, i) => (
-                      <div
-                        key={i}
-                        className="p-3 rounded-xl bg-[#F8FAFC] border border-[#DCE4EE] flex items-center justify-between text-xs"
-                      >
-                        <span className="font-medium text-[#142541] truncate max-w-xs">{r.criterion}</span>
-                        <strong className="font-mono text-[#3869AD] font-bold shrink-0 ml-2">
-                          {r.score} / {r.max}
-                        </strong>
+              return (
+                <div
+                  key={grade.id}
+                  className="rounded-3xl border border-[#DCE4EE] bg-white p-6 shadow-xs space-y-4 hover:shadow-sm transition-all"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-[#F0F4F8]">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="success">RELEASED REVIEW</Badge>
+                        <span className="text-[11px] text-[#5F6F84]">
+                          Graded on {grade.graded_at ? new Date(grade.graded_at).toLocaleDateString() : "Recent"}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      <h4 className="text-base font-bold text-[#142541]">
+                        {grade.assignment?.title || "Course Project Assessment"}
+                      </h4>
+                      <p className="text-xs text-[#5F6F84]">
+                        Submitted {grade.submitted_at ? new Date(grade.submitted_at).toLocaleDateString() : "Online"}
+                      </p>
+                    </div>
 
-              {/* Qualitative Faculty Feedback Quote Box */}
-              {grade.feedback && (
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] border border-[#DCE4EE] space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-[#142541] flex items-center gap-1.5">
-                      <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                      Faculty Reviewer Assessment:
-                    </span>
-                    <span className="text-[11px] text-[#5F6F84]">
-                      {"instructor_name" in grade ? (grade as unknown as { instructor_name: string }).instructor_name : "Academy Faculty Mentor"}
-                    </span>
+                    <div className="text-right sm:text-right">
+                      <div className="text-3xl font-black text-[#142541]">
+                        {grade.score}{" "}
+                        <span className="text-xs font-semibold text-[#5F6F84]">
+                          / {maxScore} pts
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mt-0.5">
+                        {pct >= 90 ? "Exemplary (A+)" : pct >= 80 ? "Proficient (A)" : "Competent (B)"}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-xs text-[#263449] leading-relaxed italic bg-white p-3 rounded-xl border border-[#DCE4EE]">
-                    &ldquo;{grade.feedback}&rdquo;
-                  </p>
+
+                  {/* Qualitative Faculty Review */}
+                  {grade.feedback && (
+                    <div className="rounded-2xl border border-[#3869AD]/20 bg-[#E8EFF8]/40 p-4 space-y-1 text-xs">
+                      <span className="font-bold text-[#3869AD] block uppercase tracking-wider text-[10px]">
+                        Instructor Qualitative Feedback & Rubric Notes
+                      </span>
+                      <p className="text-[#142541] leading-relaxed italic">
+                        &ldquo;{grade.feedback}&rdquo;
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Student Code / Repository Solution Link */}
+                  {grade.content && (
+                    <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#DCE4EE] text-xs space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-[#5F6F84]">
+                        Student Project Submission Reference
+                      </span>
+                      <p className="font-mono text-[11px] text-[#142541] break-all">
+                        {grade.content}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-[#DCE4EE] bg-white p-12 text-center space-y-3 shadow-xs">
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center">
+              <Award className="h-6 w-6" />
             </div>
-          ))}
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-[#142541]">No Evaluations Published Yet</h4>
+              <p className="text-xs text-[#5F6F84] max-w-sm mx-auto leading-relaxed">
+                As coursework and coding assessments are submitted by your student and evaluated by instructors, released grades and qualitative feedback will appear here.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Policy Notice */}
+      <div className="rounded-2xl border border-[#DCE4EE] bg-[#F8FAFC] p-4.5 text-xs text-[#5F6F84] flex items-start gap-3">
+        <HelpCircle className="h-5 w-5 text-[#3869AD] shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <strong className="text-[#142541] block">Grade Release Policy</strong>
+          <p className="leading-relaxed">
+            In accordance with Syntaxora educational standards, evaluation scores are held in draft state during initial marking and only become visible to learners and guardians after faculty review and moderation. Parents cannot edit or alter academic evaluations.
+          </p>
         </div>
       </div>
     </div>

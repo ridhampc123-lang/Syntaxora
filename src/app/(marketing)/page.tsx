@@ -25,7 +25,7 @@ import { Reveal } from "@/components/ui/reveal";
 export const metadata = {
   title: "Syntaxora — AI Learning Academy | Applied Artificial Intelligence for All Ages",
   description:
-    "An editorial, rigorous online academy teaching machine learning, robotics, computer vision, and neural architectures to children, teenagers, university students, and professionals.",
+    "An editorial, rigorous online academy teaching machine learning, computer vision, Python programming, and neural architectures to children, teenagers, university students, and professionals.",
 };
 
 export default async function HomePage() {
@@ -55,8 +55,8 @@ export default async function HomePage() {
             {/* Left Column: Editorial Headline & Actions */}
             <div className="lg:col-span-7 space-y-6 text-left animate-fade-in-up">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full badge-ai-gradient text-xs font-semibold text-[#17243A] transition-all">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#D34BE9] animate-pulse-dot" />
-                <span>Now Enrolling Spring & Summer 2026 • <span className="text-gradient-ai font-bold">Live AI Cohorts</span></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#167F78] animate-pulse-dot" />
+                <span>Now Enrolling Spring & Summer 2026 • <span className="text-gradient-ai font-bold">Live Cohorts</span></span>
               </div>
 
               <div className="space-y-3">
@@ -68,13 +68,13 @@ export default async function HomePage() {
                   .
                 </h1>
                 <p className="text-base sm:text-lg text-[#687386] leading-relaxed max-w-2xl font-normal">
-                  Syntaxora teaches genuine computer vision, robotics, and deep neural architectures through small, instructor-led cohorts. From visual algorithmic foundations for young minds to production transformers for engineers.
+                  Syntaxora teaches genuine <span className="text-gradient-ai font-semibold">Computer Vision</span>, applied <span className="text-gradient-ai font-semibold">Artificial Intelligence</span>, and deep <span className="text-gradient-ai font-semibold">Neural Architectures</span> through small, instructor-led cohorts. From visual algorithmic foundations for young minds to production transformers for engineers.
                 </p>
               </div>
 
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
                 <Link href="/apply">
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-semibold">
+                  <Button variant="ai" size="lg" className="w-full sm:w-auto font-bold shadow-md">
                     Apply for Admission
                     <ArrowRight className="h-4 w-4 ml-2 arrow-icon" aria-hidden="true" />
                   </Button>
@@ -142,7 +142,7 @@ export default async function HomePage() {
                   </div>
                   <Badge variant="teal" className="text-[10px] uppercase tracking-wider flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#167F78] animate-pulse-dot" />
-                    <span>Live <span className="text-gradient-ai font-extrabold">AI</span> Studio Active</span>
+                    <span>Live Vision Studio Active</span>
                   </Badge>
                 </div>
 
@@ -192,7 +192,7 @@ export default async function HomePage() {
 
                 {/* Course Cohort Indicator */}
                 <div className="flex items-center justify-between text-xs pt-2 text-[#687386]">
-                  <span>Track: Teens Robotics (Ages 12–17)</span>
+                  <span>Track: Teens Python & Applied AI (Ages 12–17)</span>
                   <Link
                     href="/courses/applied-ai-for-teens"
                     className="text-[#355F99] font-semibold hover:underline inline-flex items-center gap-1"
@@ -273,15 +273,15 @@ export default async function HomePage() {
                 </div>
                 <div className="pt-4">
                   <Link href="/courses/young-ai-explorers" className="block">
-                    <Button variant="outline" size="sm" className="w-full justify-between">
+                    <Button variant="outline" size="sm" className="w-full justify-between font-semibold border-[#DDE2E7] hover:border-[#355F99]/60 hover:bg-[#FAF8F3] text-[#17243A]">
                       <span>Explore Young Explorers Syllabus</span>
-                      <ArrowRight className="h-4 w-4 ml-1 text-[#167F78] arrow-icon" aria-hidden="true" />
+                      <ArrowRight className="h-4 w-4 ml-1 text-[#355F99] arrow-icon" aria-hidden="true" />
                     </Button>
                   </Link>
                 </div>
               </div>
 
-              {/* Pathway 2: Teens & Robotics (Ages 12–17) */}
+              {/* Pathway 2: Teens Python & Applied AI (Ages 12–17) */}
               <div className="lg:col-span-6 rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-9 space-y-6 flex flex-col justify-between card-editorial card-ai-glow group">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -292,10 +292,10 @@ export default async function HomePage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-[#17243A]">
-                      Teens Python & <span className="text-gradient-ai">AI</span> Robotics
+                      Teens Python & <span className="text-gradient-ai">Applied AI</span>
                     </h3>
                     <p className="text-xs font-semibold text-[#355F99] mt-0.5">
-                      Computer Vision, OpenCV & Neural Nets
+                      Computer Vision, OpenCV & Machine Learning Basics
                     </p>
                   </div>
                   <p className="text-sm text-[#687386] leading-relaxed">
@@ -304,7 +304,7 @@ export default async function HomePage() {
                   <div className="pt-2 border-t border-[#DDE2E7] space-y-2 text-xs text-[#354052]">
                     <div className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-[#355F99] shrink-0" aria-hidden="true" />
-                      <span>Python lists, dictionaries, functions & OOP</span>
+                      <span>Python lists, dictionaries, functions & OOP basics</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-[#355F99] shrink-0" aria-hidden="true" />
@@ -312,22 +312,22 @@ export default async function HomePage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-[#355F99] shrink-0" aria-hidden="true" />
-                      <span>Autonomous rover obstacle avoidance logic</span>
+                      <span>Interactive computer vision & practical AI models</span>
                     </div>
                   </div>
                 </div>
                 <div className="pt-4">
                   <Link href="/courses/applied-ai-for-teens" className="block">
-                    <Button variant="primary" size="sm" className="w-full justify-between">
-                      <span>Explore Teen Robotics Syllabus</span>
-                      <ArrowRight className="h-4 w-4 ml-1 arrow-icon" aria-hidden="true" />
+                    <Button variant="outline" size="sm" className="w-full justify-between font-semibold border-[#DDE2E7] hover:border-[#355F99]/60 hover:bg-[#FAF8F3] text-[#17243A]">
+                      <span>Explore Teens Python & AI Syllabus</span>
+                      <ArrowRight className="h-4 w-4 ml-1 text-[#355F99] arrow-icon" aria-hidden="true" />
                     </Button>
                   </Link>
                 </div>
               </div>
 
               {/* Pathway 3: College & University */}
-              <div className="lg:col-span-6 rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-9 space-y-6 flex flex-col justify-between card-editorial group hover:border-[#17243A]/60">
+              <div className="lg:col-span-6 rounded-2xl border border-[#DDE2E7] bg-white p-7 sm:p-9 space-y-6 flex flex-col justify-between card-editorial card-ai-glow group">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="h-11 w-11 rounded-xl bg-[#F0F2F4] text-[#17243A] flex items-center justify-center transition-transform group-hover:scale-105 duration-200">
@@ -337,7 +337,7 @@ export default async function HomePage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-[#17243A]">
-                      Deep Learning & PyTorch
+                      <span className="text-gradient-ai">Deep Learning</span> & PyTorch
                     </h3>
                     <p className="text-xs font-semibold text-[#17243A] mt-0.5">
                       Mathematical Foundations, Convolutions & Transformers
@@ -363,9 +363,9 @@ export default async function HomePage() {
                 </div>
                 <div className="pt-4">
                   <Link href="/courses/applied-deep-learning-college" className="block">
-                    <Button variant="outline" size="sm" className="w-full justify-between">
-                      <span>Explore College Syllabus</span>
-                      <ArrowRight className="h-4 w-4 ml-1 arrow-icon" aria-hidden="true" />
+                    <Button variant="outline" size="sm" className="w-full justify-between font-semibold border-[#DDE2E7] hover:border-[#355F99]/60 hover:bg-[#FAF8F3] text-[#17243A]">
+                      <span>Explore Deep Learning & PyTorch Syllabus</span>
+                      <ArrowRight className="h-4 w-4 ml-1 text-[#355F99] arrow-icon" aria-hidden="true" />
                     </Button>
                   </Link>
                 </div>
@@ -408,9 +408,9 @@ export default async function HomePage() {
                 </div>
                 <div className="pt-4">
                   <Link href="/courses/practical-generative-ai-adults" className="block">
-                    <Button variant="outline" size="sm" className="w-full justify-between">
-                      <span>Explore Professional Syllabus</span>
-                      <ArrowRight className="h-4 w-4 ml-1 arrow-icon" aria-hidden="true" />
+                    <Button variant="outline" size="sm" className="w-full justify-between font-semibold border-[#DDE2E7] hover:border-[#355F99]/60 hover:bg-[#FAF8F3] text-[#17243A]">
+                      <span>Explore Generative AI Systems Syllabus</span>
+                      <ArrowRight className="h-4 w-4 ml-1 text-[#355F99] arrow-icon" aria-hidden="true" />
                     </Button>
                   </Link>
                 </div>
@@ -432,14 +432,14 @@ export default async function HomePage() {
                   Live Interactive AI Masterclasses
                 </span>
                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
-                  Published academy <span className="text-gradient-ai">AI</span> courses.
+                  Published academy <span className="text-gradient-ai">Artificial Intelligence</span> courses.
                 </h2>
                 <p className="text-base text-[#687386] max-w-xl">
                   Every course is taught by approved academy faculty with real live video studio sessions, weekly labs, and private code reviews.
                 </p>
               </div>
               <Link href="/courses">
-                <Button variant="primary" size="sm" className="font-semibold">
+                <Button variant="ai" size="sm" className="font-bold shadow-xs">
                   Browse Full Course Catalog
                   <ArrowRight className="h-3.5 w-3.5 ml-1.5 arrow-icon" aria-hidden="true" />
                 </Button>
@@ -530,11 +530,11 @@ export default async function HomePage() {
         <Reveal>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#167F78]">
+              <span className="text-xs font-bold uppercase tracking-wider text-gradient-ai">
                 The Pedagogical Architecture
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
-                How learning actually happens.
+                How authentic <span className="text-gradient-ai">AI Systems</span> are mastered.
               </h2>
               <p className="text-base text-[#687386]">
                 We reject passive video-watching. Every student builds software with live faculty guidance, verifiable code repositories, and individual debugging sessions.
@@ -558,7 +558,7 @@ export default async function HomePage() {
                 </div>
                 <h3 className="text-lg font-bold text-[#17243A]">Hands-On Labs</h3>
                 <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
-                  Structured assignments focused on training loss, computer vision stream processing, and neural network fine-tuning.
+                  Structured assignments focused on training loss curves, <span className="text-gradient-ai font-semibold">Computer Vision</span> stream processing, and <span className="text-gradient-ai font-semibold">Neural Network</span> fine-tuning.
                 </p>
               </div>
 
@@ -617,7 +617,7 @@ export default async function HomePage() {
                 <div className="text-xs font-bold text-[#355F99] uppercase tracking-wider">Step 01</div>
                 <h4 className="text-lg font-bold text-[#17243A]">Explore Programs</h4>
                 <p className="text-xs sm:text-sm text-[#687386] leading-relaxed">
-                  Inspect age-tailored pathways in Young Explorers, Teen Robotics, College Deep Learning, or Generative AI.
+                  Inspect age-tailored pathways in Young Explorers, Teens Python & AI, College Deep Learning, or Generative AI.
                 </p>
               </div>
 
@@ -674,11 +674,11 @@ export default async function HomePage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#167F78]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-gradient-ai">
                     Verified Mentors & Authors
                   </span>
                   <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#17243A]">
-                    Taught by practicing computer scientists.
+                    Taught by practicing <span className="text-gradient-ai">Artificial Intelligence</span> scientists.
                   </h2>
                   <p className="text-base text-[#687386] max-w-xl">
                     Our instructors combine university research backgrounds with passionate youth and adult pedagogy.
@@ -742,15 +742,16 @@ export default async function HomePage() {
                 .
               </h2>
               <p className="text-base sm:text-lg text-[#DDE2E7]/80 max-w-2xl mx-auto leading-relaxed font-normal">
-                Join students, teenagers, and professionals learning to engineer <span className="text-gradient-ai-glow font-bold">neural networks</span> and robotics. Applications are reviewed on a rolling basis.
+                Join students, teenagers, and professionals learning to engineer <span className="text-gradient-ai-glow font-bold">neural networks</span> and applied AI systems. Applications are reviewed on a rolling basis.
               </p>
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/apply">
                 <Button
+                  variant="ai"
                   size="lg"
-                  className="w-full sm:w-auto font-bold px-8 btn-gradient-ai"
+                  className="w-full sm:w-auto font-bold px-8 shadow-md"
                 >
                   Apply for Admission
                   <ArrowRight className="h-4 w-4 ml-2 arrow-icon" aria-hidden="true" />

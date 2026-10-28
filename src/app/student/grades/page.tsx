@@ -3,8 +3,6 @@ import {
   Award,
   CheckCircle2,
   FileCode2,
-  GraduationCap,
-  Sparkles,
   UserCheck,
   TrendingUp,
 } from "lucide-react";
@@ -34,16 +32,22 @@ export default async function StudentGradesPage() {
     0
   );
   const averageGrade =
-    grades.length > 0 ? Math.round((totalScore / maxScoreTotal) * 100) : 95;
+    grades.length > 0 && maxScoreTotal > 0
+      ? Math.round((totalScore / maxScoreTotal) * 100)
+      : null;
 
   const letterGrade =
-    averageGrade >= 95
+    averageGrade === null
+      ? "Pending Evaluations"
+      : averageGrade >= 95
       ? "A+ (Outstanding)"
       : averageGrade >= 90
       ? "A (Distinction)"
       : averageGrade >= 85
       ? "B+ (Commendable)"
-      : "B (Satisfactory)";
+      : averageGrade >= 75
+      ? "B (Satisfactory)"
+      : "In Progress";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -79,7 +83,9 @@ export default async function StudentGradesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-[#142541]">{averageGrade}%</div>
+            <div className="text-2xl font-black text-[#142541]">
+              {averageGrade !== null ? `${averageGrade}%` : "—"}
+            </div>
             <p className="text-[11px] text-purple-700 font-semibold mt-1">
               Letter Standing: {letterGrade}
             </p>
@@ -97,7 +103,9 @@ export default async function StudentGradesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-[#142541]">{grades.length}</div>
-            <p className="text-[11px] text-[#5F6F84] mt-1">Peer audited and faculty certified</p>
+            <p className="text-[11px] text-[#5F6F84] mt-1">
+              {grades.length > 0 ? "Peer audited and faculty certified" : "Awaiting mentor reviews"}
+            </p>
           </CardContent>
         </Card>
 
@@ -107,13 +115,15 @@ export default async function StudentGradesPage() {
               Academic Standing
             </CardTitle>
             <div className="h-8 w-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <GraduationCap className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-emerald-700">Honor Roll</div>
-            <p className="text-[11px] text-emerald-600 font-semibold mt-1">
-              Eligible for Advanced Robotics Placement
+            <div className="text-2xl font-black text-emerald-700">
+              {averageGrade !== null && averageGrade >= 85 ? "Good Standing" : "In Progress"}
+            </div>
+            <p className="text-[11px] text-[#5F6F84] mt-1">
+              Verified by Syntaxora Academic Dean
             </p>
           </CardContent>
         </Card>
@@ -127,7 +137,7 @@ export default async function StudentGradesPage() {
           </div>
           <h2 className="text-base font-bold text-[#142541]">No Published Evaluations Yet</h2>
           <p className="text-xs text-[#5F6F84] max-w-sm mx-auto leading-relaxed">
-            Your instructor will audit your submitted code deliverables and release the official evaluation reports and rubrics here.
+            Your instructor will audit your submitted code deliverables and release the official evaluation reports and rubrics here once scored.
           </p>
         </div>
       ) : (
@@ -149,7 +159,16 @@ export default async function StudentGradesPage() {
                     </Badge>
                   </div>
                   <div className="text-[11px] text-[#5F6F84] mt-1 flex items-center gap-2">
-                    <span>Evaluated: {grade.graded_at ? new Date(grade.graded_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently"}</span>
+                    <span>
+                      Evaluated:{" "}
+                      {grade.graded_at
+                        ? new Date(grade.graded_at).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : "Recently"}
+                    </span>
                     <span>•</span>
                     <span>Submission ID: {grade.id.substring(0, 16)}</span>
                   </div>
@@ -158,40 +177,9 @@ export default async function StudentGradesPage() {
                 <div className="flex items-center gap-3">
                   <div className="px-4 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-mono font-black text-sm flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span>Score: {grade.score} / {grade.assignment?.max_score || 100} pts</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rubric Breakdown Indicators */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#DCE4EE] space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-[#142541]">Algorithm Correctness</span>
-                    <span className="font-bold text-[#168B83]">98%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#168B83] w-[98%]" />
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#DCE4EE] space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-[#142541]">Code Architecture & Style</span>
-                    <span className="font-bold text-[#3869AD]">95%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#3869AD] w-[95%]" />
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#DCE4EE] space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-[#142541]">Documentation & Comments</span>
-                    <span className="font-bold text-purple-600">92%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[#E2E8F0] rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-600 w-[92%]" />
+                    <span>
+                      Score: {grade.score} / {grade.assignment?.max_score || 100} pts
+                    </span>
                   </div>
                 </div>
               </div>
@@ -211,7 +199,9 @@ export default async function StudentGradesPage() {
 
               {/* Submitted Code / Solution Details */}
               <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#DCE4EE] text-[11px] space-y-1">
-                <span className="font-semibold text-[#5F6F84]">Submitted Code Snippet / Repository:</span>
+                <span className="font-semibold text-[#5F6F84]">
+                  Submitted Code Snippet / Repository:
+                </span>
                 <div className="font-mono text-[#142541] bg-white p-2.5 rounded-lg border border-[#DCE4EE] overflow-x-auto whitespace-pre-wrap">
                   {grade.content}
                 </div>

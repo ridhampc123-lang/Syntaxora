@@ -85,10 +85,10 @@ export function CreateStudentForm({ onComplete }: { onComplete?: () => void }) {
 
       <Button
         type="submit"
-        variant="primary"
+        variant="ai"
         size="md"
         isLoading={isPending}
-        className="w-full justify-center"
+        className="w-full justify-center font-bold shadow-xs"
       >
         Generate Student Code & Create Record
       </Button>

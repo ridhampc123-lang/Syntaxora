@@ -31,7 +31,7 @@ export default function HowItWorksPage() {
             Syntaxora Educational Architecture
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A] leading-tight">
-            How learning &amp; guardian oversight works at our academy.
+            How <span className="text-gradient-ai">AI</span> learning &amp; guardian oversight works at our academy.
           </h1>
           <p className="text-base sm:text-lg text-[#687386] leading-relaxed font-normal">
             We operate on a transparent educational model: small live cohorts, selective admission placement, and zero-trust minor privacy. Select below to explore the student learning path or parent oversight process.

@@ -114,7 +114,7 @@ export function ContactForm() {
             required
             value={formData.subject}
             onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
-            placeholder="e.g. Teen Robotics Cohort Inquiry"
+            placeholder="e.g. Teens Python & AI Cohort Inquiry"
             error={state.errors?.subject?.[0]}
           />
           {state.errors?.subject?.[0] && (

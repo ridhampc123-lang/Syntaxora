@@ -72,10 +72,11 @@ export function StartLiveClassButton({
 
   return (
     <Button
-      variant="primary"
+      variant="ai"
       size="sm"
       onClick={handleStart}
       disabled={isPending}
+      className="font-bold shadow-xs"
     >
       <Play className="h-3 w-3 mr-1 fill-current" />
       {isPending ? "Starting..." : "Start Class"}

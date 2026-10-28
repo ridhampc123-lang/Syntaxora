@@ -39,6 +39,7 @@ export interface ActionResult {
   courseId?: string;
   studentCode?: string;
   temporaryPassword?: string;
+  assignedBatch?: string;
 }
 
 
@@ -128,6 +129,55 @@ export async function createStudentAction(
       success: false,
       message: "An unexpected error occurred while creating student.",
     };
+  }
+}
+
+export async function updateStudentStatusAction(
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+  const studentId = formData.get("studentId")?.toString();
+  const status = formData.get("status")?.toString() as StudentStatus;
+
+  if (!studentId || !status) {
+    return { success: false, message: "Missing student ID or status." };
+  }
+
+  const validStatuses: StudentStatus[] = ["active", "pending", "paused", "archived"];
+  if (!validStatuses.includes(status)) {
+    return { success: false, message: "Invalid student status." };
+  }
+
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    let client: any = null;
+    try {
+      client = createAdminClient();
+    } catch {
+      client = await createClient();
+    }
+
+    const { error } = await client
+      .from("students")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", studentId);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    await logAuditEvent(actor.userId, "STUDENT_STATUS_UPDATED", "STUDENT", studentId, {
+      new_status: status,
+    });
+
+    revalidatePath("/admin/students");
+    return {
+      success: true,
+      message: `Student account status transitioned to ${status}.`,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to update student status.";
+    return { success: false, message: msg };
   }
 }
 
@@ -655,6 +705,7 @@ export async function reviewApplicationAction(
     decision: formData.get("decision")?.toString() || "",
     decisionReason: formData.get("decisionReason")?.toString() || "",
     adminNotes: formData.get("adminNotes")?.toString() || "",
+    batchId: formData.get("batchId")?.toString() || "",
   };
 
   const { applicationReviewSchema } = await import("@/lib/validation/application");
@@ -680,7 +731,8 @@ export async function reviewApplicationAction(
     actor.userId,
     validation.data.decision,
     validation.data.decisionReason,
-    validation.data.adminNotes
+    validation.data.adminNotes,
+    validation.data.batchId
   );
 
   if (result.success) {
@@ -692,13 +744,20 @@ export async function reviewApplicationAction(
       {
         decision: validation.data.decision,
         reason: validation.data.decisionReason,
+        batch_id: validation.data.batchId || null,
       }
     );
     revalidatePath("/admin/applications");
     revalidatePath("/admin");
   }
 
-  return result;
+  return {
+    success: result.success,
+    message: result.message,
+    studentCode: result.studentCode,
+    temporaryPassword: result.temporaryPassword,
+    assignedBatch: result.assignedBatch,
+  };
 }
 
 export async function resendStudentSetupEmailAction(
@@ -721,6 +780,7 @@ export async function resendStudentSetupEmailAction(
     message: result.message,
     studentCode: result.studentCode,
     temporaryPassword: result.temporaryPassword,
+    assignedBatch: result.assignedBatch,
   };
 }
 
@@ -912,5 +972,139 @@ export async function deleteInstructorAction(
     message: "Failed to remove faculty member.",
   };
 }
+
+export async function verifyManualPaymentAction(
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+  const orderId = formData.get("orderId")?.toString();
+  const paymentMethod = formData.get("paymentMethod")?.toString() || "bank_transfer";
+  const reference = formData.get("reference")?.toString() || "";
+  const notes = formData.get("notes")?.toString() || "";
+
+  if (!orderId) {
+    return { success: false, message: "Missing order ID." };
+  }
+
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    let client: any = null;
+    try {
+      client = createAdminClient();
+    } catch {
+      client = await createClient();
+    }
+
+    const now = new Date().toISOString();
+
+    // 1. Fetch the order
+    const { data: order, error: orderErr } = await client
+      .from("payment_orders")
+      .select("*")
+      .eq("id", orderId)
+      .maybeSingle();
+
+    if (orderErr || !order) {
+      return { success: false, message: "Payment order not found." };
+    }
+
+    // 2. Update order status to paid
+    await client
+      .from("payment_orders")
+      .update({ status: "paid", updated_at: now })
+      .eq("id", orderId);
+
+    // 3. Insert payment record
+    await client
+      .from("payments")
+      .insert({
+        order_id: orderId,
+        amount_in_cents: order.amount_in_cents,
+        currency: order.currency,
+        status: "paid",
+        payment_method: paymentMethod,
+        provider_payment_id: reference || `manual-${Date.now()}`,
+        paid_at: now,
+        raw_response: { verified_by: actor.userId, notes },
+      });
+
+    // 4. Update student enrollment payment_status if exists
+    if (order.student_id && order.course_id) {
+      await client
+        .from("enrollments")
+        .update({ payment_status: "verified", updated_at: now })
+        .eq("student_id", order.student_id)
+        .eq("course_id", order.course_id);
+    }
+
+    await logAuditEvent(actor.userId, "PAYMENT_MANUALLY_VERIFIED", "PAYMENT", orderId, {
+      amount_in_cents: order.amount_in_cents,
+      currency: order.currency,
+      method: paymentMethod,
+      reference,
+      notes,
+    });
+
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin/enrollments");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      message: "Payment successfully verified and enrollment reconciled.",
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to verify payment.";
+    return { success: false, message: msg };
+  }
+}
+
+export async function toggleEnquiryStatusAction(
+  formData: FormData
+): Promise<ActionResult> {
+  const actor = await requireRole(["admin"]);
+  const enquiryId = formData.get("enquiryId")?.toString();
+  const newStatus = formData.get("newStatus")?.toString() || "read";
+
+  if (!enquiryId) {
+    return { success: false, message: "Missing enquiry ID." };
+  }
+
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    let client: any = null;
+    try {
+      client = createAdminClient();
+    } catch {
+      client = await createClient();
+    }
+
+    const { error } = await client
+      .from("contact_enquiries")
+      .update({ status: newStatus })
+      .eq("id", enquiryId);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    await logAuditEvent(actor.userId, "ENQUIRY_STATUS_UPDATED", "ENQUIRY", enquiryId, {
+      status: newStatus,
+    });
+
+    revalidatePath("/admin/enquiries");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      message: `Enquiry marked as ${newStatus}.`,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to update enquiry.";
+    return { success: false, message: msg };
+  }
+}
+
+
 
 

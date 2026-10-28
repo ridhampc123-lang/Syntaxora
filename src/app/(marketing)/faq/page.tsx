@@ -70,7 +70,7 @@ const FAQ_SECTIONS = [
     category: "Technical & Hardware Requirements",
     items: [
       {
-        q: "What computer specs are required for AI and robotics coursework?",
+        q: "What computer specs are required for AI and programming coursework?",
         a: "A desktop or laptop running Windows 10/11, macOS, or modern Linux with at least 8GB RAM, a working webcam, and a microphone. For college and adult deep learning courses, compute-intensive model training is conducted on cloud instances, avoiding costly local GPU requirements.",
       },
       {
@@ -104,7 +104,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
-            Answers about our <span className="text-gradient-ai">AI</span> Academy cohorts.
+            Answers about our <span className="text-gradient-ai">Artificial Intelligence</span> Academy cohorts.
           </h1>
           <p className="text-base text-[#687386] leading-relaxed max-w-2xl font-normal">
             Information regarding our admissions process, cohort sizes, live classes, hardware requirements, and guardian privacy.
@@ -154,7 +154,7 @@ export default function FAQPage() {
             </p>
             <div className="pt-2">
               <Link href="/contact">
-                <Button variant="primary" size="md" className="font-semibold">
+                <Button variant="ai" size="md" className="font-bold shadow-sm">
                   Contact Admissions Support
                   <ArrowRight className="h-4 w-4 ml-1.5 arrow-icon" aria-hidden="true" />
                 </Button>

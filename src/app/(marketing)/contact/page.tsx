@@ -32,7 +32,7 @@ export default function ContactPage() {
             Advisory & Admissions Support
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
-            Contact <span className="text-gradient-ai">AI</span> Admissions & Faculty Support
+            Contact <span className="text-gradient-ai">Artificial Intelligence</span> Admissions & Faculty Support
           </h1>
           <p className="text-base text-[#687386] leading-relaxed font-normal">
             Have questions regarding age placement, hardware prerequisites, cohort schedules, or guardian portal linking? Our admissions advisors are available to assist.

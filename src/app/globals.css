@@ -169,13 +169,24 @@ body {
 }
 
 /* =========================================================================
-   Dhruv Rathee AI Masterclass Signature Gradient & Highlighting System
-   Palette: Electric Blue (#3188FF) -> Vivid Magenta (#D34BE9) -> Radiant Amber (#FF994B)
+   Syntaxora Signature Dual-Gradient & AI Highlighting System
+   Normal Palette: Electric Blue (#3188FF) -> Vivid Magenta (#D34BE9) -> Radiant Amber (#FF7A30)
+   Hover Palette: Amber Gold (#FFB144) -> Neon Rose (#FF2E93) -> Electric Violet (#8B25F7) -> Cyber Aqua (#00E5FF)
    ========================================================================= */
 
-/* Primary AI Gradient Text - High Contrast, Vivid, Crisp */
+/* Primary AI Gradient Text - Interactive Color Transition on Hover */
 .text-gradient-ai {
-  background: linear-gradient(90deg, #3188FF 0%, #D34BE9 50.5%, #FF994B 100%);
+  background: linear-gradient(
+    90deg,
+    #3188FF 0%,
+    #A838F5 16%,
+    #D34BE9 32%,
+    #FF7A30 48%,
+    #FFB144 60%,
+    #FF2E93 74%,
+    #8B25F7 88%,
+    #00E5FF 100%
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -184,18 +195,28 @@ body {
   display: inline;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  background-size: 200% auto;
-  transition: background-position 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+  background-size: 260% 100%;
+  background-position: 0% 50%;
+  transition: background-position 0.55s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease, transform 0.2s ease;
 }
 
 .text-gradient-ai:hover {
-  background-position: right center;
-  filter: drop-shadow(0 2px 10px rgba(211, 75, 233, 0.35));
+  background-position: 100% 50%;
+  filter: drop-shadow(0 2px 14px rgba(255, 46, 147, 0.45)) drop-shadow(0 0 16px rgba(0, 229, 255, 0.35));
 }
 
-/* AI Gradient Text on Dark/Ink Surfaces with Luminous Glow */
+/* AI Gradient Text on Dark/Ink Surfaces with Luminous Glow & Dynamic Shift */
 .text-gradient-ai-glow {
-  background: linear-gradient(90deg, #4EA1FF 0%, #E364F8 50.5%, #FFA861 100%);
+  background: linear-gradient(
+    90deg,
+    #4EA1FF 0%,
+    #C44BF5 16%,
+    #E364F8 32%,
+    #FFA861 48%,
+    #FF4B72 66%,
+    #B145FF 84%,
+    #00F5D4 100%
+  );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -204,45 +225,65 @@ body {
   display: inline;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  background-size: 200% auto;
+  background-size: 260% 100%;
+  background-position: 0% 50%;
   filter: drop-shadow(0 2px 12px rgba(227, 100, 248, 0.45));
-  transition: background-position 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+  transition: background-position 0.55s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease, transform 0.2s ease;
 }
 
 .text-gradient-ai-glow:hover {
-  background-position: right center;
-  filter: drop-shadow(0 4px 18px rgba(227, 100, 248, 0.65));
+  background-position: 100% 50%;
+  filter: drop-shadow(0 4px 20px rgba(0, 245, 212, 0.65)) drop-shadow(0 0 14px rgba(255, 75, 114, 0.4));
 }
 
-/* Subtle Pill / Luminous AI Badge (Directly Inspired by Dhruv Rathee's .lspota) */
+/* Subtle Pill / Luminous AI Badge - Interactive Gradient Transition */
 .badge-ai-gradient {
-  background: linear-gradient(90deg, rgba(49, 136, 255, 0.10) 0%, rgba(211, 75, 233, 0.12) 50.5%, rgba(255, 153, 75, 0.12) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(49, 136, 255, 0.10) 0%,
+    rgba(211, 75, 233, 0.12) 32%,
+    rgba(255, 153, 75, 0.12) 50%,
+    rgba(255, 46, 147, 0.15) 75%,
+    rgba(0, 229, 255, 0.15) 100%
+  );
+  background-size: 240% 100%;
+  background-position: 0% 50%;
   border: 1px solid rgba(211, 75, 233, 0.35);
   box-shadow: 0 0 14px rgba(211, 75, 233, 0.15);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-position 0.5s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .badge-ai-gradient:hover {
-  background: linear-gradient(90deg, rgba(49, 136, 255, 0.16) 0%, rgba(211, 75, 233, 0.18) 50.5%, rgba(255, 153, 75, 0.18) 100%);
-  border-color: rgba(211, 75, 233, 0.6);
-  box-shadow: 0 0 20px rgba(211, 75, 233, 0.28);
+  background-position: 100% 50%;
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.3), 0 0 12px rgba(255, 46, 147, 0.25);
   transform: translateY(-1px);
 }
 
-/* Gradient Button Accent (Inspired by Dhruv Rathee's .ai-button) */
+/* Gradient Button Accent - Smooth Dual-Gradient Hover Transition */
 .btn-gradient-ai {
-  background: linear-gradient(90deg, #3188FF 0%, #D34BE9 50.5%, #FF994B 100%);
-  background-size: 200% auto;
+  background: linear-gradient(
+    90deg,
+    #3188FF 0%,
+    #A838F5 16%,
+    #D34BE9 32%,
+    #FF7A30 48%,
+    #FF2E93 68%,
+    #8B25F7 84%,
+    #00E5FF 100%
+  );
+  background-size: 260% 100%;
+  background-position: 0% 50%;
   color: #FFFFFF !important;
   font-weight: 700;
-  border: none;
+  border: none !important;
   box-shadow: 0 4px 18px rgba(211, 75, 233, 0.35);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-position 0.55s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .btn-gradient-ai:hover {
-  background-position: right center;
-  box-shadow: 0 6px 24px rgba(211, 75, 233, 0.5);
+  background-position: 100% 50%;
+  box-shadow: 0 6px 26px rgba(0, 229, 255, 0.45), 0 2px 14px rgba(255, 46, 147, 0.35);
   transform: translateY(-1.5px);
 }
 

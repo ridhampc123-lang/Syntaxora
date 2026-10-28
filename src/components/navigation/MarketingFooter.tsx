@@ -59,7 +59,7 @@ export function MarketingFooter() {
               </li>
               <li>
                 <Link href="/courses?audience=teens" className="hover:text-white transition-colors">
-                  Teens & Robotics (12–17)
+                  Teens Python & AI (12–17)
                 </Link>
               </li>
               <li>
@@ -166,9 +166,9 @@ export function MarketingFooter() {
 
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-[#DDE2E7]/60 gap-4">
-          <p>© 2026 Syntaxora AI Learning Academy. All rights reserved.</p>
+          <p>© 2026 Syntaxora <span className="text-gradient-ai-glow font-bold">AI</span> Learning Academy. All rights reserved.</p>
           <p className="text-center sm:text-right">
-            Practical AI, Robotics & Systems Education for Kids, Teens, and Adults.
+            Practical <span className="text-gradient-ai-glow font-bold">AI</span>, Computer Vision & Systems Education for Kids, Teens, and Adults.
           </p>
         </div>
       </div>

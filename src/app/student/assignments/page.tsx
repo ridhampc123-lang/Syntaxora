@@ -132,7 +132,22 @@ export default async function StudentAssignmentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#DCE4EE] text-[#263449]">
-              {assignments.map((asn) => {
+              {assignments.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-12 text-center text-[#5F6F84]">
+                    <div className="max-w-sm mx-auto space-y-2">
+                      <div className="h-10 w-10 rounded-full bg-[#E8EFF8] text-[#3869AD] flex items-center justify-center mx-auto">
+                        <ClipboardList className="h-5 w-5" />
+                      </div>
+                      <div className="font-bold text-sm text-[#142541]">No Deliverables Assigned Yet</div>
+                      <p className="text-xs">
+                        Assignments and laboratory project benchmarks for your enrolled tracks will appear here once published by faculty mentors.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) :
+                assignments.map((asn) => {
                 const sub = asn.submission;
                 const isGraded = sub?.status === "graded" && sub.is_grade_published;
 

@@ -81,6 +81,7 @@ export function StudentApplicationForm({ courses, initialCourseId }: Props) {
   // Keep state synchronized with any returned values
   useEffect(() => {
     if (state?.values) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData((prev) => ({
         ...prev,
         ...state.values,
@@ -424,7 +425,7 @@ export function StudentApplicationForm({ courses, initialCourseId }: Props) {
             rows={3}
             value={formData.statementOfInterest}
             onChange={(e) => setFormData((prev) => ({ ...prev, statementOfInterest: e.target.value }))}
-            placeholder="Tell us briefly about any coding, robotics, or mathematics experience, and what you hope to build at Syntaxora..."
+            placeholder="Tell us briefly about any coding, computer science, or mathematics experience, and what you hope to build at Syntaxora..."
             maxLength={1000}
             className={`w-full rounded-lg border bg-white p-3 text-xs text-[#17243A] shadow-sm placeholder:text-[#687386]/60 focus:border-[#355F99] focus:outline-none focus:ring-1 focus:ring-[#355F99] ${
               state.errors?.statementOfInterest?.[0]
@@ -558,7 +559,7 @@ export function StudentApplicationForm({ courses, initialCourseId }: Props) {
       <div className="pt-2">
         <Button
           type="submit"
-          variant="primary"
+          variant="ai"
           size="lg"
           isLoading={isPending}
           className="w-full sm:w-auto px-8 justify-center font-bold shadow-md hover:shadow-lg transition-all"

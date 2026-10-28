@@ -39,12 +39,12 @@ const STUDENT_STEPS: Step[] = [
   {
     step: "01",
     title: "Explore Age-Matched AI Tracks",
-    subtitle: "Real Python, Computer Vision, Deep Learning & Robotics",
+    subtitle: "Real Python, Computer Vision, Deep Learning & Generative AI",
     description:
       "Review our 4 specialized learning pathways tailored for Young Learners (ages 7–11), Teens (ages 12–17), College Scholars, and Working Professionals. Each track has clearly defined prerequisite skillsets and practical capstone deliverables.",
     highlightPoints: [
       "Young Explorers: Visual block logic, sensor interaction & playful AI puzzles",
-      "Teens: Hands-on OpenCV image recognition & edge hardware robotics",
+      "Teens: Hands-on OpenCV image recognition & interactive Python AI apps",
       "College & Pro: PyTorch neural architectures, backpropagation & enterprise RAG pipelines",
     ],
     icon: Compass,
@@ -276,9 +276,9 @@ export function HowItWorksTabs() {
               </p>
             </div>
             <Link href="/apply" className="shrink-0">
-              <Button size="md" className="font-bold btn-gradient-ai shadow-xs">
+              <Button variant="ai" size="md" className="font-bold shadow-sm">
                 Apply for Cohort
-                <ArrowRight className="h-4 w-4 ml-1.5" />
+                <ArrowRight className="h-4 w-4 ml-1.5 arrow-icon" />
               </Button>
             </Link>
           </div>
@@ -483,9 +483,9 @@ export function HowItWorksTabs() {
         {/* Action Buttons */}
         <div className="pt-4 flex flex-col sm:flex-row items-center gap-3 border-t border-[#DCE4EE]">
           <Link href="/apply">
-            <Button variant="primary" size="lg" className="font-bold btn-gradient-ai">
+            <Button variant="ai" size="lg" className="font-bold shadow-md">
               Submit Student Admission Application
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowRight className="h-4 w-4 ml-2 arrow-icon" />
             </Button>
           </Link>
           <Link href="/sign-up?role=parent">

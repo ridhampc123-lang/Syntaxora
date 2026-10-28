@@ -2,20 +2,17 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  LayoutDashboard,
-  BookOpen,
-  CalendarCheck,
-  ClipboardList,
-  Award,
-  CheckSquare,
   ExternalLink,
   LogOut,
+  Bell,
+  User,
 } from "lucide-react";
 import { requireRole } from "@/server/services/authService";
 import {
   getStudentByProfileId,
   getStudentAssignments,
   getStudentSessions,
+  getStudentNotifications,
 } from "@/server/services/studentService";
 import { signOutAction } from "@/server/actions/auth";
 import { StudentSidebarNav } from "@/components/navigation/StudentSidebarNav";
@@ -65,22 +62,24 @@ export default async function StudentLayout({
   }
 
   // Fetch badge counts for navigation
-  const [assignments, sessions] = student
+  const [assignments, sessions, notifications] = student
     ? await Promise.all([
         getStudentAssignments(student.id),
         getStudentSessions(student.id),
+        getStudentNotifications(auth.userId),
       ])
-    : [[], []];
+    : [[], [], []];
 
   const pendingAssignmentsCount = assignments.filter((a) => !a.submission).length;
   const upcomingSessionsCount = sessions.filter((s) => s.status === "scheduled" || s.status === "in_progress").length;
+  const unreadNotificationsCount = notifications.filter((n) => !n.is_read).length;
 
   return (
     <div className="min-h-screen bg-[#F3F6FA] flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-[#142541] via-[#0E1B31] to-[#0A1322] text-white flex flex-col shrink-0 border-r border-[#142541] shadow-xl z-20">
+      {/* Sidebar - Fixed to viewport so it never scrolls with page */}
+      <aside className="fixed top-0 left-0 bottom-0 w-64 h-screen bg-gradient-to-b from-[#142541] via-[#0E1B31] to-[#0A1322] text-white flex flex-col shrink-0 border-r border-[#142541] shadow-xl z-30 overflow-y-auto">
         {/* Brand */}
-        <div className="p-5 border-b border-white/10">
+        <div className="p-5 border-b border-white/10 shrink-0">
           <Link href="/student" className="flex items-center gap-3">
             <div className="relative h-9 w-9 rounded-xl overflow-hidden bg-[#03060C] border border-white/20 shadow-md shrink-0 ring-1 ring-cyan-500/30">
               <Image
@@ -101,7 +100,7 @@ export default async function StudentLayout({
         </div>
 
         {/* Student Code & Profile Badge */}
-        <div className="p-3.5 mx-3.5 my-3 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-between gap-2.5 backdrop-blur-xs">
+        <div className="p-3.5 mx-3.5 my-3 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-between gap-2.5 backdrop-blur-xs shrink-0">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#3869AD] to-[#168B83] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
               {auth.profile.full_name?.charAt(0) || "S"}
@@ -124,10 +123,11 @@ export default async function StudentLayout({
         <StudentSidebarNav
           pendingAssignmentsCount={pendingAssignmentsCount}
           upcomingSessionsCount={upcomingSessionsCount}
+          unreadNotificationsCount={unreadNotificationsCount}
         />
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10 space-y-2 text-xs">
+        <div className="p-4 border-t border-white/10 space-y-2 text-xs shrink-0 mt-auto">
           <Link
             href="/"
             className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[#DCE4EE]/70 hover:text-white hover:bg-white/5 transition-colors"
@@ -148,26 +148,47 @@ export default async function StudentLayout({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-[#DCE4EE] px-8 flex items-center justify-between shrink-0 shadow-xs z-10">
+      <div className="flex-1 ml-64 flex flex-col min-w-0 min-h-screen">
+        <header className="h-16 bg-white border-b border-[#DCE4EE] px-8 flex items-center justify-between shrink-0 shadow-xs sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Active Student Cohort</span>
             </div>
             <span className="hidden md:inline text-xs text-[#5F6F84]">
-              Applied Artificial Intelligence & Robotics
+              Applied Artificial Intelligence & Computer Vision
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-3 text-xs">
+            {/* Notifications Shortcut */}
+            <Link
+              href="/student/notifications"
+              className="relative p-2 rounded-xl text-[#5F6F84] hover:text-[#142541] hover:bg-[#F3F6FA] transition-colors"
+              title="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
+              )}
+            </Link>
+
+            {/* Profile Shortcut */}
+            <Link
+              href="/student/profile"
+              className="p-2 rounded-xl text-[#5F6F84] hover:text-[#142541] hover:bg-[#F3F6FA] transition-colors"
+              title="Student Profile"
+            >
+              <User className="h-4 w-4" />
+            </Link>
+
             <div className="hidden sm:flex items-center gap-2 bg-[#F3F6FA] px-3 py-1.5 rounded-lg border border-[#DCE4EE]">
               <span className="text-[11px] text-[#5F6F84]">Student Code:</span>
               <span className="font-mono text-[#142541] font-bold">
                 {student?.student_code}
               </span>
             </div>
-            <span className="text-[#5F6F84] font-medium text-[11px]">
+            <span className="hidden lg:inline text-[#5F6F84] font-medium text-[11px]">
               {auth.email}
             </span>
           </div>

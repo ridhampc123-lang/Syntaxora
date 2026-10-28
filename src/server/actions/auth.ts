@@ -10,7 +10,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
 } from "@/lib/validation/auth";
-import { INITIAL_STUDENTS } from "@/server/services/adminService";
+import { INITIAL_STUDENTS } from "@/server/services/studentFixtures";
 
 export interface AuthActionResult {
   success: boolean;
@@ -105,13 +105,18 @@ export async function signInAction(
   const matchedDemo = DEMO_ACCOUNTS[email];
 
   try {
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
+    let cookieStore: Awaited<ReturnType<typeof import("next/headers").cookies>> | null = null;
+    try {
+      const { cookies } = await import("next/headers");
+      cookieStore = await cookies();
+    } catch {
+      // Non-request scope / unit testing resilience
+    }
 
     // If recognized demo account and valid password provided, grant authentication
     if (matchedDemo && matchedDemo.validPasswords.includes(password)) {
       // Set reliable session cookie
-      cookieStore.set(
+      cookieStore?.set(
         "syntaxora_demo_auth",
         JSON.stringify({
           userId: matchedDemo.id,
@@ -153,15 +158,24 @@ export async function signInAction(
       };
     }
 
-    // Check provisioned student in-memory records (for local dev / unit testing resilience)
+    // Check provisioned student unique temporary password and in-memory records
+    const { PROVISIONED_TEMP_PASSWORDS } = await import("@/server/services/provisioningService");
+    const provisionedTemp = PROVISIONED_TEMP_PASSWORDS.get(email);
+    const isProvisionedMatch = Boolean(provisionedTemp && password === provisionedTemp);
+
     const inMemoryStudent = INITIAL_STUDENTS.find(
       (s) => s.profile?.email.toLowerCase() === email
     );
     if (
       inMemoryStudent &&
-      (password === "StudentPassword123!" || password === "Password123!" || password === "student")
+      (
+        isProvisionedMatch ||
+        password === "StudentPassword123!" ||
+        password === "Password123!" ||
+        password === "student"
+      )
     ) {
-      cookieStore.set(
+      cookieStore?.set(
         "syntaxora_demo_auth",
         JSON.stringify({
           userId: inMemoryStudent.profile_id || inMemoryStudent.id,
@@ -188,6 +202,44 @@ export async function signInAction(
       return {
         success: true,
         message: `Signed in successfully as ${inMemoryStudent.profile?.full_name || "Student"}.`,
+        redirectTo: destination,
+      };
+    }
+
+    if (!inMemoryStudent && isProvisionedMatch) {
+      const { IN_MEMORY_APPLICATIONS } = await import("@/server/services/applicationService");
+      const matchedApp = IN_MEMORY_APPLICATIONS.find(
+        (a) => a.email.toLowerCase() === email && a.status === "approved"
+      );
+      const fullName = matchedApp?.full_name || email.split("@")[0];
+      const studentId = matchedApp?.provisioned_student_id || `s-temp-${email}`;
+      cookieStore?.set(
+        "syntaxora_demo_auth",
+        JSON.stringify({
+          userId: studentId,
+          email,
+          role: "student",
+          fullName,
+        }),
+        {
+          path: "/",
+          httpOnly: false,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7,
+        }
+      );
+
+      const rawRedirect = formData.get("redirect")?.toString();
+      const isSafeRelativeUrl =
+        Boolean(rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//"));
+      let destination = "/student";
+      if (isSafeRelativeUrl && rawRedirect && rawRedirect.startsWith("/student")) {
+        destination = rawRedirect;
+      }
+
+      return {
+        success: true,
+        message: `Signed in successfully as ${fullName}.`,
         redirectTo: destination,
       };
     }
@@ -229,7 +281,7 @@ export async function signInAction(
     }
 
     // Set fallback cookie to maintain robust session across navigation
-    cookieStore.set(
+    cookieStore?.set(
       "syntaxora_demo_auth",
       JSON.stringify({
         userId: authData.user.id,

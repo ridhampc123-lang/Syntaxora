@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
             Academy Operating Rules
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
-            Syntaxora <span className="text-gradient-ai">AI</span> Terms of Service & Code of Conduct
+            Syntaxora <span className="text-gradient-ai">Artificial Intelligence</span> Terms of Service & Code of Conduct
           </h1>
           <p className="text-xs text-[#687386] pt-1">
             Last Updated: October 2026 • Effective for all enrolled students, guardians, and portal accounts

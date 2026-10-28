@@ -35,7 +35,7 @@ export default async function StudentAttendancePage() {
   const attendanceRate =
     records.length > 0
       ? Math.round(((presentCount + lateCount + excusedCount) / records.length) * 100)
-      : 100;
+      : null;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -50,7 +50,7 @@ export default async function StudentAttendancePage() {
             Personal Session Attendance Log
           </h1>
           <p className="text-xs sm:text-sm text-[#5F6F84] mt-1 max-w-2xl">
-            Audited biometric and platform participation logs for all registered lectures, interactive peer code reviews, and virtual robotics sessions.
+            Audited biometric and platform participation logs for all registered lectures, interactive peer code reviews, and virtual coding lab sessions.
           </p>
         </div>
 
@@ -71,10 +71,12 @@ export default async function StudentAttendancePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-[#142541]">{attendanceRate}%</div>
-            <p className="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Full Academy Compliance</span>
+            <div className="text-2xl font-black text-[#142541]">
+              {attendanceRate !== null ? `${attendanceRate}%` : "—"}
+            </div>
+            <p className="text-[11px] text-[#5F6F84] mt-1 flex items-center gap-1">
+              <span className={`h-1.5 w-1.5 rounded-full ${attendanceRate !== null ? "bg-emerald-500" : "bg-slate-300"}`} />
+              <span>{attendanceRate !== null ? "Audited Academy Compliance" : "No logged sessions yet"}</span>
             </p>
           </CardContent>
         </Card>

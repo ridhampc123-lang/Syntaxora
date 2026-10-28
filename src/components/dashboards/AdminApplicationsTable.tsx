@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Eye } from "lucide-react";
-import { StudentApplication, ApplicationStatus } from "@/types";
+import { StudentApplication, ApplicationStatus, Batch } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ApplicationReviewModal } from "@/components/forms/ApplicationReviewModal";
@@ -12,9 +12,10 @@ import type { DuplicateDetectionResult } from "@/server/services/applicationServ
 interface Props {
   applications: StudentApplication[];
   duplicateMap: Record<string, DuplicateDetectionResult>;
+  batches?: Batch[];
 }
 
-export function AdminApplicationsTable({ applications, duplicateMap }: Props) {
+export function AdminApplicationsTable({ applications, duplicateMap, batches = [] }: Props) {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -215,6 +216,7 @@ export function AdminApplicationsTable({ applications, duplicateMap }: Props) {
               matchingStudents: [],
             }
           }
+          batches={batches}
           isOpen={true}
           onClose={() => setSelectedApp(null)}
           onSuccess={() => {

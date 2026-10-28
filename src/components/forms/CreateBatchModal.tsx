@@ -36,7 +36,7 @@ export function CreateBatchModal({
 
   return (
     <>
-      <Button variant="primary" size="sm" onClick={handleOpen}>
+      <Button variant="ai" size="sm" onClick={handleOpen} className="font-bold shadow-xs">
         <Plus className="h-4 w-4 mr-1.5" />
         Create Batch
       </Button>
@@ -224,7 +224,7 @@ export function CreateBatchModal({
                 <Button variant="outline" size="sm" type="button" onClick={handleClose}>
                   Cancel
                 </Button>
-                <Button variant="primary" size="sm" type="submit" disabled={isPending}>
+                <Button variant="ai" size="sm" type="submit" disabled={isPending} className="font-bold shadow-xs">
                   {isPending ? "Creating..." : "Confirm & Create Batch"}
                 </Button>
               </div>

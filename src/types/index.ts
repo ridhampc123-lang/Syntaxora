@@ -308,3 +308,40 @@ export interface StudentApplication {
   student_code?: string | null;
 }
 
+export interface Notification {
+  id: string;
+  recipient_profile_id: string;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "success" | "assignment" | "class";
+  action_url?: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface CourseResource {
+  id: string;
+  course_id: string;
+  title: string;
+  description: string;
+  file_type: "pdf" | "code" | "dataset" | "archive" | "document";
+  file_url: string;
+  file_size?: string;
+  module_title?: string;
+  created_at: string;
+}
+
+export interface StudentBillingRecord {
+  id: string;
+  invoice_number: string;
+  course_id: string;
+  course_title: string;
+  amount_in_cents: number;
+  currency: string;
+  status: "paid" | "pending" | "failed";
+  payment_method?: string | null;
+  paid_at?: string | null;
+  created_at: string;
+}
+
+

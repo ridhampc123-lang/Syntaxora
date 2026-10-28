@@ -26,10 +26,10 @@ export default async function ParentLayout({
 
   return (
     <div className="min-h-screen bg-[#F3F6FA] flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#142541] text-white flex flex-col shrink-0 border-r border-[#142541]">
+      {/* Sidebar - Fixed to viewport so it never scrolls with page */}
+      <aside className="fixed top-0 left-0 bottom-0 w-64 h-screen bg-[#142541] text-white flex flex-col shrink-0 border-r border-[#142541] z-30 overflow-y-auto">
         {/* Brand */}
-        <div className="p-6 border-b border-white/10">
+        <div className="p-6 border-b border-white/10 shrink-0">
           <Link href="/parent" className="flex items-center gap-2.5">
             <div className="relative h-8 w-8 rounded-lg overflow-hidden bg-[#03060C] border border-white/20 shadow-md shrink-0">
               <Image
@@ -50,7 +50,7 @@ export default async function ParentLayout({
         </div>
 
         {/* Parent Identity & Verified Children Badge */}
-        <div className="p-4 mx-4 my-3 rounded-xl bg-white/5 border border-white/10 space-y-2">
+        <div className="p-4 mx-4 my-3 rounded-xl bg-white/5 border border-white/10 space-y-2 shrink-0">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-full bg-[#168B83] text-white flex items-center justify-center font-bold text-xs shrink-0">
               {auth.profile.full_name?.charAt(0) || "P"}
@@ -73,7 +73,7 @@ export default async function ParentLayout({
         <ParentSidebarNav />
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10 space-y-2 text-xs">
+        <div className="p-4 border-t border-white/10 space-y-2 text-xs shrink-0 mt-auto">
           <Link
             href="/"
             className="flex items-center gap-2 text-[#DCE4EE]/70 hover:text-white transition-colors"
@@ -94,8 +94,8 @@ export default async function ParentLayout({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-[#DCE4EE] px-8 flex items-center justify-between shrink-0 shadow-xs">
+      <div className="flex-1 ml-64 flex flex-col min-w-0 min-h-screen">
+        <header className="h-16 bg-white border-b border-[#DCE4EE] px-8 flex items-center justify-between shrink-0 shadow-xs sticky top-0 z-20">
           <div className="text-xs font-bold text-[#5F6F84] uppercase tracking-wider">
             Verified Guardian Oversight Portal
           </div>
@@ -104,7 +104,7 @@ export default async function ParentLayout({
           </div>
         </header>
 
-        <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-6 sm:p-8 max-w-7xl w-full mx-auto">{children}</main>
       </div>
     </div>
   );

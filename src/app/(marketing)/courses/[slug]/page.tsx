@@ -79,9 +79,9 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         {/* Hero Banner Header */}
         <div className="rounded-2xl bg-[#17243A] text-white p-8 lg:p-12 space-y-6 shadow-md border border-[#17243A] animate-fade-in-up">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full badge-ai-gradient text-xs font-semibold text-white">
-              <Sparkles className="h-3.5 w-3.5 text-[#FF994B]" aria-hidden="true" />
-              <span>Syntaxora <span className="text-gradient-ai-glow font-bold">AI</span> Masterclass</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-white">
+              <Sparkles className="h-3.5 w-3.5 text-[#D7A66A]" aria-hidden="true" />
+              <span>Syntaxora Verified Curriculum</span>
             </div>
             {course.status !== "published" && (
               <Badge variant="secondary" className="uppercase text-[10px] tracking-wider font-bold bg-[#FF994B]/20 text-[#FF994B] border-[#FF994B]/40">
@@ -278,7 +278,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               {/* Application Action Button */}
               <div className="space-y-3 pt-4 border-t border-[#DDE2E7]">
                 <Link href={`/apply?course=${course.id}`} className="w-full block">
-                  <Button size="lg" className="w-full font-bold justify-center btn-gradient-ai">
+                  <Button variant="ai" size="lg" className="w-full font-bold justify-center shadow-md">
                     Apply for Cohort Admission
                     <ArrowRight className="h-4 w-4 ml-2 arrow-icon" aria-hidden="true" />
                   </Button>

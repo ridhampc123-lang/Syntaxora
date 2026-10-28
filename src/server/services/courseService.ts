@@ -24,9 +24,9 @@ export const INITIAL_ACADEMY_COURSES: Course[] = [
   {
     id: "c1000000-0000-0000-0000-000000000001",
     slug: "applied-ai-for-teens",
-    title: "Applied AI & Python Robotics for Teens",
+    title: "Applied AI & Python Programming for Teens",
     summary: "Hands-on machine learning, computer vision, and Python programming designed specifically for students ages 12 to 17.",
-    description: "In this comprehensive course, teen learners transition from coding syntax to building real AI applications. Starting with Python foundations, students implement image recognition models using OpenCV, train neural networks to classify objects, and deploy intelligent agents on edge hardware.",
+    description: "In this comprehensive course, teen learners transition from coding syntax to building real AI applications. Starting with Python foundations, students implement image recognition models using OpenCV, train neural networks to classify objects, and deploy interactive computer vision applications.",
     level: "beginner",
     audience_group: "teens",
     delivery_mode: "live_online",

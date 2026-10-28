@@ -40,7 +40,7 @@ export default function AboutPage() {
             .
           </h1>
           <p className="text-base sm:text-lg text-[#687386] leading-relaxed font-normal">
-            Syntaxora was founded on a straightforward pedagogical thesis: artificial intelligence literacy should not be reduced to passive consumption or superficial hype. It must be taught as an applied, rigorous discipline accessible across developmental stages.
+            Syntaxora was founded on a straightforward pedagogical thesis: <span className="text-gradient-ai font-semibold">Artificial Intelligence</span> literacy should not be reduced to passive consumption or superficial hype. It must be taught as an applied, rigorous discipline accessible across developmental stages.
           </p>
         </div>
 
@@ -107,7 +107,7 @@ export default function AboutPage() {
                 <div className="p-4 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-1.5 transition-colors hover:border-[#355F99]/40">
                   <div className="font-bold text-sm text-[#17243A]">Teens (Ages 12–17)</div>
                   <p className="text-xs text-[#687386]">
-                    Write production Python, process real camera streams with OpenCV, and train convolutional networks for rover robotics.
+                    Write production Python, process real camera streams with OpenCV, and build interactive machine learning and vision applications.
                   </p>
                 </div>
                 <div className="p-4 rounded-xl border border-[#DDE2E7] bg-[#FAF8F3] space-y-1.5 transition-colors hover:border-[#17243A]/40">
@@ -130,7 +130,7 @@ export default function AboutPage() {
                 Have questions regarding our academic philosophy or faculty?
               </div>
               <Link href="/contact">
-                <Button variant="primary" size="md" className="font-semibold">
+                <Button variant="ai" size="md" className="font-bold shadow-sm">
                   Contact Admissions Support
                   <ArrowRight className="h-4 w-4 ml-1.5 arrow-icon" aria-hidden="true" />
                 </Button>

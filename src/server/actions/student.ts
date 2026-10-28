@@ -93,6 +93,54 @@ export async function markLessonCompleteAction(formData: FormData) {
   }
 }
 
+export async function markNotificationAsReadAction(formData: FormData): Promise<void> {
+  try {
+    const auth = await requireRole(["student", "admin"]);
+    const notificationId = formData.get("notificationId")?.toString();
+
+    if (notificationId) {
+      const { markNotificationAsRead } = await import("@/server/services/studentService");
+      const result = await markNotificationAsRead(notificationId, auth.userId);
+
+      if (result.success) {
+        revalidatePath("/student/notifications");
+        revalidatePath("/student");
+      }
+    }
+  } catch {
+    // Non-throwing form action
+  }
+}
+
+export async function submitStudentQueryAction(formData: FormData): Promise<void> {
+  try {
+    const auth = await requireRole(["student", "admin"]);
+    const subject = formData.get("subject")?.toString()?.trim();
+    const category = formData.get("category")?.toString() || "academic";
+    const message = formData.get("message")?.toString()?.trim();
+
+    if (subject && message) {
+      const { logAuditEvent } = await import("@/server/actions/admin");
+      await logAuditEvent(
+        auth.userId,
+        "STUDENT_SUPPORT_QUERY_SUBMITTED",
+        "SUPPORT",
+        undefined,
+        {
+          email: auth.email,
+          subject,
+          category,
+          message,
+        }
+      );
+
+      revalidatePath("/student/support");
+    }
+  } catch {
+    // Non-throwing form action
+  }
+}
+
 export async function submitStudentLeaveNoticeAction(formData: FormData) {
   try {
     const auth = await requireRole(["student", "admin"]);

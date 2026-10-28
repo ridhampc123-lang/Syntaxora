@@ -67,11 +67,19 @@ export async function submitContactEnquiry(
     });
 
     if (error) {
-      console.info("[Contact Enquiry Received]", {
+      console.error("[Contact Enquiry Insert Failed]", {
         name: validation.data.fullName,
         email: validation.data.email,
         subject: validation.data.subject,
+        error,
       });
+
+      return {
+        success: false,
+        message:
+          "We could not submit your enquiry right now. Please try again in a moment or email admissions@syntaxora.com directly.",
+        values: rawData,
+      };
     }
 
     return {
@@ -85,6 +93,7 @@ export async function submitContactEnquiry(
       success: false,
       message:
         "An unexpected error occurred while sending your message. Please try again or email us directly.",
+      values: rawData,
     };
   }
 }

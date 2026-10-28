@@ -7,7 +7,7 @@ import { StudentApplicationForm } from "@/components/forms/StudentApplicationFor
 export const metadata = {
   title: "Apply for Admission — Syntaxora AI Academy",
   description:
-    "Apply for enrollment in Syntaxora AI and robotics cohorts. Student accounts are provisioned upon faculty admissions review.",
+    "Apply for enrollment in Syntaxora AI and computer vision cohorts. Student accounts are provisioned upon faculty admissions review.",
 };
 
 interface Props {
@@ -47,11 +47,11 @@ export default async function ApplyPage({ searchParams }: Props) {
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
-            Apply to Syntaxora AI Academy
+            Apply to Syntaxora <span className="text-gradient-ai">AI</span> Academy
           </h1>
 
           <p className="text-base text-[#687386] max-w-2xl leading-relaxed font-normal">
-            Join a selective cohort of young innovators, high-school roboticists, university researchers, or working professionals mastering real artificial intelligence and neural systems.
+            Join a selective cohort of young innovators, high-school coders, university researchers, or working professionals mastering real <span className="text-gradient-ai font-semibold">Artificial Intelligence</span> and neural systems.
           </p>
         </div>
 

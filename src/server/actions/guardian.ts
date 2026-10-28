@@ -252,6 +252,10 @@ export async function requestStudentLinkAction(
 
     if (result.success) {
       revalidatePath("/parent");
+      revalidatePath("/parent/attendance");
+      revalidatePath("/parent/progress");
+      revalidatePath("/parent/billing");
+      revalidatePath("/parent/schedule");
       revalidatePath("/admin/guardians");
     }
 
@@ -306,6 +310,10 @@ export async function adminApproveRelationshipAction(
     if (result.success) {
       revalidatePath("/admin/guardians");
       revalidatePath("/parent");
+      revalidatePath("/parent/attendance");
+      revalidatePath("/parent/progress");
+      revalidatePath("/parent/billing");
+      revalidatePath("/parent/schedule");
     }
 
     return {
@@ -346,6 +354,10 @@ export async function adminRejectRelationshipAction(
     if (result.success) {
       revalidatePath("/admin/guardians");
       revalidatePath("/parent");
+      revalidatePath("/parent/attendance");
+      revalidatePath("/parent/progress");
+      revalidatePath("/parent/billing");
+      revalidatePath("/parent/schedule");
     }
 
     return {
@@ -413,4 +425,178 @@ export async function adminDirectConnectAction(
     return { success: false, message: msg };
   }
 }
+
+export async function submitGuardianInquiryAction(
+  prevState: GuardianActionResult | null,
+  formData: FormData
+): Promise<GuardianActionResult> {
+  try {
+    const user = await requireUser();
+    if (user.profile.role !== "parent" && user.profile.role !== "admin") {
+      return {
+        success: false,
+        message: "Only authorized guardian or administrator accounts can submit support requests.",
+      };
+    }
+
+    const studentId = formData.get("studentId")?.toString().trim();
+    const studentCode = formData.get("studentCode")?.toString().trim();
+    const inquiryType = formData.get("inquiryType")?.toString().trim() || "general_support";
+    const subject = formData.get("subject")?.toString().trim() || "Guardian Support Request";
+    const leaveDate = formData.get("leaveDate")?.toString().trim();
+    const reason = formData.get("reason")?.toString().trim();
+    const notes = formData.get("notes")?.toString().trim() || formData.get("message")?.toString().trim() || "";
+
+    if (!notes && !reason) {
+      return {
+        success: false,
+        message: "Please provide a reason or description for your request.",
+      };
+    }
+
+    // If request relates to a specific student, verify the relationship is active
+    if (studentId) {
+      const { verifyGuardianStudentAccess } = await import("@/server/services/guardianService");
+      // Check that this guardian has an active relationship with this student
+      const { getActiveChildrenForGuardian } = await import("@/server/services/guardianService");
+      const activeChildren = await getActiveChildrenForGuardian(user.userId);
+      const isAuthorized = activeChildren.some((c) => c.student_id === studentId);
+      if (!isAuthorized && user.profile.role !== "admin") {
+        return {
+          success: false,
+          message: "You are not authorized to submit requests on behalf of this student.",
+        };
+      }
+    }
+
+    const formattedSubject = studentCode
+      ? `[${inquiryType.toUpperCase().replace("_", " ")}] Student ${studentCode}: ${subject}`
+      : `[${inquiryType.toUpperCase().replace("_", " ")}] ${subject}`;
+
+    const formattedMessage = [
+      `Guardian: ${user.profile.full_name} (${user.email})`,
+      studentCode ? `Student Code: ${studentCode}` : null,
+      studentId ? `Student ID: ${studentId}` : null,
+      leaveDate ? `Effective Date: ${leaveDate}` : null,
+      reason ? `Reason / Topic: ${reason}` : null,
+      `Notes: ${notes}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const supabase = await createClient();
+    const { error: insertError } = await supabase.from("contact_enquiries").insert({
+      full_name: user.profile.full_name,
+      email: user.email,
+      subject: formattedSubject,
+      message: formattedMessage,
+      status: "unread",
+    });
+
+    if (insertError) {
+      console.warn("[Guardian Inquiry DB fallback]", insertError.message);
+      const { IN_MEMORY_INQUIRIES } = await import("@/server/services/guardianService");
+      IN_MEMORY_INQUIRIES.unshift({
+        id: `inq-${Date.now()}`,
+        email: user.email,
+        full_name: user.profile.full_name,
+        subject: formattedSubject,
+        message: formattedMessage,
+        status: "unread",
+        created_at: new Date().toISOString(),
+      });
+    }
+
+    await supabase.from("audit_logs").insert({
+      actor_id: user.userId,
+      action: "GUARDIAN_SUPPORT_REQUEST_SUBMITTED",
+      entity_type: "contact_enquiries",
+      details: {
+        inquiry_type: inquiryType,
+        student_id: studentId || null,
+        student_code: studentCode || null,
+        subject: formattedSubject,
+      },
+    });
+
+    revalidatePath("/parent/support");
+    revalidatePath("/parent/attendance");
+
+    return {
+      success: true,
+      message: "Your inquiry has been submitted to the academy administration. A student success advisor will follow up shortly.",
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to submit request.";
+    return { success: false, message: msg };
+  }
+}
+
+export async function markNotificationReadAction(notificationId: string): Promise<{ success: boolean }> {
+  try {
+    const user = await requireUser();
+    const { markNotificationAsRead } = await import("@/server/services/guardianService");
+    await markNotificationAsRead(notificationId, user.userId);
+    revalidatePath("/parent/notifications");
+    revalidatePath("/parent");
+    return { success: true };
+  } catch {
+    return { success: false };
+  }
+}
+
+export async function initiateTuitionPaymentAction(
+  studentId: string,
+  amountInCents: number,
+  courseId: string
+): Promise<{ success: boolean; configured: boolean; error?: string; orderId?: string; clientSecret?: string }> {
+  try {
+    const user = await requireUser();
+    const { verifyGuardianStudentAccess } = await import("@/server/services/guardianService");
+    const isPermitted = await verifyGuardianStudentAccess(user.userId, studentId, "fees");
+    if (!isPermitted && user.profile.role !== "admin") {
+      return {
+        success: false,
+        configured: false,
+        error: "Your guardian authorization does not permit accessing financial or tuition transactions for this student.",
+      };
+    }
+
+    const { isPaymentConfigured, createPaymentOrder } = await import("@/server/integrations/payments/paymentAdapter");
+    if (!isPaymentConfigured()) {
+      return {
+        success: false,
+        configured: false,
+        error: "Payment gateway credentials (STRIPE_SECRET_KEY / RAZORPAY_KEY_SECRET) are not currently configured in the environment. Live card checkout cannot be completed online. Please contact billing@syntaxora.com or arrange an offline bank transfer.",
+      };
+    }
+
+    const orderRes = await createPaymentOrder({
+      studentId,
+      courseId,
+      amountInCents,
+      currency: "USD",
+      payerEmail: user.email,
+    });
+
+    if (orderRes.error) {
+      return {
+        success: false,
+        configured: true,
+        error: orderRes.error,
+      };
+    }
+
+    return {
+      success: true,
+      configured: true,
+      orderId: orderRes.orderId,
+      clientSecret: orderRes.clientSecret,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to initiate payment transaction.";
+    return { success: false, configured: false, error: msg };
+  }
+}
+
 

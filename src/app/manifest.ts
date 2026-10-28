@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Syntaxora — AI Learning Academy",
     short_name: "Syntaxora",
     description:
-      "Applied artificial intelligence and robotics education for kids, teens, and adults.",
+      "Applied artificial intelligence, computer vision, and machine learning education for kids, teens, and adults.",
     start_url: "/",
     display: "standalone",
     background_color: "#17243A",

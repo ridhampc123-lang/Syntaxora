@@ -1,12 +1,52 @@
 import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Student } from "@/types";
-import { INITIAL_STUDENTS } from "./adminService";
+import { Student, Enrollment } from "@/types";
+import { INITIAL_STUDENTS } from "./studentFixtures";
+import { INITIAL_ACADEMY_COURSES } from "./courseService";
+import { getBatchById, getBatchScheduleTemplates } from "./batchService";
+import { IN_MEMORY_ENROLLMENTS } from "./enrollmentService";
 import { sendEmail, getStudentAdmissionSetupEmail } from "@/server/integrations/email/emailAdapter";
 import { getApplicationById, IN_MEMORY_APPLICATIONS } from "./applicationService";
 
 export const DEFAULT_STUDENT_PASSWORD = "StudentPassword123!";
+
+// In-memory registry of unique temporary passwords per student email for reliable authentication
+export const PROVISIONED_TEMP_PASSWORDS = new Map<string, string>();
+
+/**
+ * Generates a high-entropy unique temporary password for a student.
+ * Pattern: Syntaxora!<6 uppercase letters/numbers> (e.g. Syntaxora!8F39A1)
+ * Meets all enterprise password policies: Uppercase, Lowercase, Number, Special Char.
+ */
+export function generateUniqueTemporaryPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.randomBytes(6);
+  let randomPart = "";
+  for (let i = 0; i < 6; i++) {
+    randomPart += chars[bytes[i] % chars.length];
+  }
+  return `Syntaxora!${randomPart}`;
+}
+
+export function formatBatchScheduleText(
+  templates: { weekday: number; start_time_local: string; end_time_local: string; timezone?: string }[]
+): string {
+  if (!templates || templates.length === 0) return "";
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayNames = templates.map((t) => days[t.weekday]).join(", ");
+  const formatTime = (timeStr: string) => {
+    const parts = timeStr.split(":");
+    let h = parseInt(parts[0], 10);
+    const m = parts[1] || "00";
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  };
+  const t0 = templates[0];
+  const timeRange = `${formatTime(t0.start_time_local)} – ${formatTime(t0.end_time_local)}`;
+  return `${dayNames} (${timeRange} IST)`;
+}
 
 export interface ProvisioningResult {
   success: boolean;
@@ -14,6 +54,7 @@ export interface ProvisioningResult {
   studentId?: string;
   studentCode?: string;
   temporaryPassword?: string;
+  assignedBatch?: string;
   alreadyProvisioned?: boolean;
   emailStatus: {
     sent: boolean;
@@ -88,11 +129,14 @@ export async function generateUniqueStudentCode(): Promise<string> {
  * 3. Unique Student Code: Generated server-side, non-sequential, stored with database uniqueness constraint.
  * 4. Audit Trail: Approving administrator ID is recorded in audit logs and application history.
  * 5. Honest Email Status: Accurately reflects provider configuration and delivery state.
+ * 6. Unique Temporary Password: Every student receives an individual, cryptographically random temporary password.
+ * 7. Schedule & Batch Assignment: Admin assigns cohort batch and timetable at approval time.
  */
 export async function provisionStudentFromApplication(
   applicationId: string,
   adminUserId: string,
-  decisionReason?: string
+  decisionReason?: string,
+  assignedBatchId?: string
 ): Promise<ProvisioningResult> {
   const app = await getApplicationById(applicationId);
 
@@ -141,6 +185,25 @@ export async function provisionStudentFromApplication(
   const normalizedEmail = app.email.toLowerCase().trim();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+  // Generate individual unique temporary password for this student
+  const temporaryPassword = generateUniqueTemporaryPassword();
+  PROVISIONED_TEMP_PASSWORDS.set(normalizedEmail, temporaryPassword);
+
+  // Resolve batch details if assigned
+  let batchDetails: { batchName: string; schedule?: string; instructor?: string } | undefined;
+  if (assignedBatchId) {
+    const batch = await getBatchById(assignedBatchId);
+    if (batch) {
+      const templates = await getBatchScheduleTemplates(assignedBatchId);
+      const scheduleStr = formatBatchScheduleText(templates);
+      batchDetails = {
+        batchName: batch.name,
+        schedule: scheduleStr,
+        instructor: batch.primary_instructor?.full_name,
+      };
+    }
+  }
+
   if (!isSupabaseConfigured()) {
     // In-memory provisioning for testing and local dev
     const existingStudent = INITIAL_STUDENTS.find(
@@ -182,6 +245,21 @@ export async function provisionStudentFromApplication(
 
     INITIAL_STUDENTS.push(createdStudent);
 
+    // Create enrollment with assigned batch
+    const targetCourseId = app.course_id || INITIAL_ACADEMY_COURSES[0].id;
+    const newEnrollment: Enrollment = {
+      id: `e-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`,
+      student_id: newStudentId,
+      course_id: targetCourseId,
+      batch_id: assignedBatchId || null,
+      status: "active",
+      admission_source: "approved_application",
+      payment_status: "verified",
+      starts_at: now,
+      created_at: now,
+    };
+    IN_MEMORY_ENROLLMENTS.unshift(newEnrollment);
+
     // Update application state
     app.status = "approved";
     app.provisioned_student_id = newStudentId;
@@ -190,9 +268,15 @@ export async function provisionStudentFromApplication(
     app.reviewed_at = now;
     app.decision_reason = decisionReason || "Admission approved. Student account provisioned.";
 
-    // Dispatch setup email
+    // Dispatch setup email with unique temporary password & batch info
     const setupUrl = `${siteUrl}/login?email=${encodeURIComponent(normalizedEmail)}&setup=true`;
-    const emailTemplate = getStudentAdmissionSetupEmail(app.full_name, studentCode, setupUrl, DEFAULT_STUDENT_PASSWORD);
+    const emailTemplate = getStudentAdmissionSetupEmail(
+      app.full_name,
+      studentCode,
+      setupUrl,
+      temporaryPassword,
+      batchDetails
+    );
     const emailResult = await sendEmail({
       to: normalizedEmail,
       subject: emailTemplate.subject,
@@ -203,10 +287,11 @@ export async function provisionStudentFromApplication(
 
     return {
       success: true,
-      message: `Student account successfully provisioned with code ${studentCode}.`,
+      message: `Student account successfully provisioned with code ${studentCode}.${batchDetails ? ` Assigned to ${batchDetails.batchName}.` : ""}`,
       studentId: newStudentId,
       studentCode,
-      temporaryPassword: DEFAULT_STUDENT_PASSWORD,
+      temporaryPassword,
+      assignedBatch: batchDetails?.batchName,
       emailStatus: {
         sent: emailResult.delivered,
         provider: emailResult.provider,
@@ -322,7 +407,7 @@ export async function provisionStudentFromApplication(
         const adminClient = createAdminClient();
         const { data: newUser, error: createAuthError } = await adminClient.auth.admin.createUser({
           email: normalizedEmail,
-          password: DEFAULT_STUDENT_PASSWORD,
+          password: temporaryPassword,
           email_confirm: true,
           user_metadata: {
             role: "student",
@@ -337,7 +422,7 @@ export async function provisionStudentFromApplication(
             profileId = matched.id;
             try {
               await adminClient.auth.admin.updateUserById(matched.id, {
-                password: DEFAULT_STUDENT_PASSWORD,
+                password: temporaryPassword,
                 email_confirm: true,
               });
             } catch {}
@@ -392,7 +477,7 @@ export async function provisionStudentFromApplication(
           date_of_birth: app.date_of_birth || null,
           emergency_contact_phone: app.guardian_phone || app.phone || null,
           status: "active",
-          notes: `Admitted from application ${app.application_reference}. Track: ${app.course_title || "General"}.`,
+          notes: `Admitted from application ${app.application_reference}. Track: ${app.course_title || "General"}.${batchDetails ? ` Batch: ${batchDetails.batchName}.` : ""}`,
         })
         .select("id, student_code")
         .single();
@@ -421,7 +506,7 @@ export async function provisionStudentFromApplication(
         date_of_birth: app.date_of_birth || undefined,
         emergency_contact_phone: app.guardian_phone || app.phone || undefined,
         status: "active",
-        notes: `Admitted from application ${app.application_reference}. Track: ${app.course_title || "General"}.`,
+        notes: `Admitted from application ${app.application_reference}. Track: ${app.course_title || "General"}.${batchDetails ? ` Batch: ${batchDetails.batchName}.` : ""}`,
         created_at: now,
         updated_at: now,
         profile: {
@@ -435,19 +520,33 @@ export async function provisionStudentFromApplication(
       });
     }
 
-    // 5. Enroll into target course if course_id is specified
-    if (app.course_id) {
-      try {
-        await supabase.from("enrollments").insert({
-          student_id: newStudent.id,
-          course_id: app.course_id,
-          status: "active",
-          enrolled_at: now,
-        });
-      } catch (enrollErr) {
-        console.warn("[Provisioning Warning] Automatic enrollment creation note:", enrollErr);
-      }
+    // 5. Enroll into target course and assigned batch
+    const targetCourseId = app.course_id || INITIAL_ACADEMY_COURSES[0].id;
+    try {
+      await supabase.from("enrollments").insert({
+        student_id: newStudent.id,
+        course_id: targetCourseId,
+        batch_id: assignedBatchId || null,
+        status: "active",
+        enrolled_at: now,
+      });
+    } catch (enrollErr) {
+      console.warn("[Provisioning Warning] Automatic enrollment creation note:", enrollErr);
     }
+
+    // Keep in-memory enrollment synchronized
+    const memEnrollment: Enrollment = {
+      id: `e-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`,
+      student_id: newStudent.id,
+      course_id: targetCourseId,
+      batch_id: assignedBatchId || null,
+      status: "active",
+      admission_source: "approved_application",
+      payment_status: "verified",
+      starts_at: now,
+      created_at: now,
+    };
+    IN_MEMORY_ENROLLMENTS.unshift(memEnrollment);
 
     // 6. Update student_applications table safely
     try {
@@ -491,13 +590,20 @@ export async function provisionStudentFromApplication(
           application_id: applicationId,
           application_reference: app.application_reference,
           student_code: newStudent.student_code,
-          course_id: app.course_id,
+          course_id: targetCourseId,
+          batch_id: assignedBatchId || null,
         },
       });
     } catch {}
 
-    // 8. Dispatch setup email
-    const emailTemplate = getStudentAdmissionSetupEmail(app.full_name, newStudent.student_code, setupUrl, DEFAULT_STUDENT_PASSWORD);
+    // 8. Dispatch setup email with unique temporary password and batch info
+    const emailTemplate = getStudentAdmissionSetupEmail(
+      app.full_name,
+      newStudent.student_code,
+      setupUrl,
+      temporaryPassword,
+      batchDetails
+    );
     const emailResult = await sendEmail({
       to: normalizedEmail,
       subject: emailTemplate.subject,
@@ -508,10 +614,11 @@ export async function provisionStudentFromApplication(
 
     return {
       success: true,
-      message: `Student account successfully provisioned with unique code ${newStudent.student_code}.`,
+      message: `Student account successfully provisioned with unique code ${newStudent.student_code}.${batchDetails ? ` Assigned to ${batchDetails.batchName}.` : ""}`,
       studentId: newStudent.id,
       studentCode: newStudent.student_code,
-      temporaryPassword: DEFAULT_STUDENT_PASSWORD,
+      temporaryPassword,
+      assignedBatch: batchDetails?.batchName,
       emailStatus: {
         sent: emailResult.delivered,
         provider: emailResult.provider,
@@ -531,7 +638,7 @@ export async function provisionStudentFromApplication(
       date_of_birth: app.date_of_birth || undefined,
       emergency_contact_phone: app.guardian_phone || app.phone || undefined,
       status: "active",
-      notes: `Admitted from application ${app.application_reference}. Track: ${app.course_title || "General"}.`,
+      notes: `Admitted from application ${app.application_reference}. Track: ${app.course_title || "General"}.${batchDetails ? ` Batch: ${batchDetails.batchName}.` : ""}`,
       created_at: now,
       updated_at: now,
       profile: {
@@ -542,6 +649,19 @@ export async function provisionStudentFromApplication(
         created_at: now,
         updated_at: now,
       },
+    });
+
+    const targetCourseId = app.course_id || INITIAL_ACADEMY_COURSES[0].id;
+    IN_MEMORY_ENROLLMENTS.unshift({
+      id: `e-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`,
+      student_id: fallbackStudentId,
+      course_id: targetCourseId,
+      batch_id: assignedBatchId || null,
+      status: "active",
+      admission_source: "approved_application",
+      payment_status: "verified",
+      starts_at: now,
+      created_at: now,
     });
 
     const memApp = IN_MEMORY_APPLICATIONS.find(
@@ -559,16 +679,18 @@ export async function provisionStudentFromApplication(
 
     return {
       success: true,
-      message: `Student account successfully provisioned with code ${fallbackStudentCode}.`,
+      message: `Student account successfully provisioned with code ${fallbackStudentCode}.${batchDetails ? ` Assigned to ${batchDetails.batchName}.` : ""}`,
       studentId: fallbackStudentId,
       studentCode: fallbackStudentCode,
+      temporaryPassword,
+      assignedBatch: batchDetails?.batchName,
       emailStatus: { sent: false, provider: "unconfigured", message: "Application provisioned in runtime store" },
     };
   }
 }
 
 /**
- * Resends the account setup invitation email to a provisioned student.
+ * Resends the account setup invitation email to a provisioned student with their unique credentials and schedule.
  */
 export async function resendStudentSetupEmail(
   applicationId: string,
@@ -579,6 +701,7 @@ export async function resendStudentSetupEmail(
   provider: string;
   studentCode?: string;
   temporaryPassword?: string;
+  assignedBatch?: string;
 }> {
   const app = await getApplicationById(applicationId);
   if (!app) {
@@ -593,7 +716,14 @@ export async function resendStudentSetupEmail(
     };
   }
 
+  const normalizedEmail = app.email.toLowerCase().trim();
   let studentCode = "STUDENT";
+  let temporaryPassword = PROVISIONED_TEMP_PASSWORDS.get(normalizedEmail);
+  if (!temporaryPassword) {
+    temporaryPassword = generateUniqueTemporaryPassword();
+    PROVISIONED_TEMP_PASSWORDS.set(normalizedEmail, temporaryPassword);
+  }
+
   if (isSupabaseConfigured()) {
     try {
       const supabase = await createClient();
@@ -604,14 +734,14 @@ export async function resendStudentSetupEmail(
         .maybeSingle();
       if (data?.student_code) studentCode = data.student_code;
 
-      // Ensure password is set to default in Supabase Auth
+      // Ensure password in Supabase Auth is synchronized
       try {
         const adminClient = createAdminClient();
         const { data: listData } = await adminClient.auth.admin.listUsers();
-        const matched = listData.users.find((u) => u.email?.toLowerCase() === app.email.toLowerCase().trim());
+        const matched = listData.users.find((u) => u.email?.toLowerCase() === normalizedEmail);
         if (matched) {
           await adminClient.auth.admin.updateUserById(matched.id, {
-            password: DEFAULT_STUDENT_PASSWORD,
+            password: temporaryPassword,
             email_confirm: true,
           });
         }
@@ -626,10 +756,33 @@ export async function resendStudentSetupEmail(
     if (match) studentCode = match.student_code;
   }
 
+  // Resolve batch & schedule details for the email
+  let batchDetails: { batchName: string; schedule?: string; instructor?: string } | undefined;
+  const memEnrollment = IN_MEMORY_ENROLLMENTS.find((e) => e.student_id === app.provisioned_student_id);
+  const batchId = memEnrollment?.batch_id;
+  if (batchId) {
+    const b = await getBatchById(batchId);
+    if (b) {
+      const templates = await getBatchScheduleTemplates(batchId);
+      const sched = formatBatchScheduleText(templates);
+      batchDetails = {
+        batchName: b.name,
+        schedule: sched || undefined,
+        instructor: b.primary_instructor?.full_name || undefined,
+      };
+    }
+  }
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const setupUrl = `${siteUrl}/login?email=${encodeURIComponent(app.email)}&setup=true`;
 
-  const emailTemplate = getStudentAdmissionSetupEmail(app.full_name, studentCode, setupUrl, DEFAULT_STUDENT_PASSWORD);
+  const emailTemplate = getStudentAdmissionSetupEmail(
+    app.full_name,
+    studentCode,
+    setupUrl,
+    temporaryPassword,
+    batchDetails
+  );
   const emailResult = await sendEmail({
     to: app.email,
     subject: emailTemplate.subject,
@@ -661,12 +814,13 @@ export async function resendStudentSetupEmail(
     message: emailResult.message,
     provider: emailResult.provider,
     studentCode,
-    temporaryPassword: DEFAULT_STUDENT_PASSWORD,
+    temporaryPassword,
+    assignedBatch: batchDetails?.batchName,
   };
 }
 
 /**
- * Resets a student's portal password to the default academy password and returns login details.
+ * Resets a student's portal password with a newly generated unique temporary password.
  */
 export async function resetStudentCredentials(
   applicationId: string,
@@ -699,6 +853,10 @@ export async function resetStudentCredentials(
     };
   }
 
+  const normalizedEmail = app.email.toLowerCase().trim();
+  const newTemporaryPassword = generateUniqueTemporaryPassword();
+  PROVISIONED_TEMP_PASSWORDS.set(normalizedEmail, newTemporaryPassword);
+
   let studentCode = "STUDENT";
   if (isSupabaseConfigured()) {
     try {
@@ -713,11 +871,11 @@ export async function resetStudentCredentials(
       const adminClient = createAdminClient();
       const { data: listData } = await adminClient.auth.admin.listUsers();
       const matched = listData.users.find(
-        (u) => u.email?.toLowerCase() === app.email.toLowerCase().trim()
+        (u) => u.email?.toLowerCase() === normalizedEmail
       );
       if (matched) {
         await adminClient.auth.admin.updateUserById(matched.id, {
-          password: DEFAULT_STUDENT_PASSWORD,
+          password: newTemporaryPassword,
           email_confirm: true,
         });
       }
@@ -742,9 +900,9 @@ export async function resetStudentCredentials(
 
   return {
     success: true,
-    message: `Student password successfully set to '${DEFAULT_STUDENT_PASSWORD}'.`,
+    message: `Student temporary password successfully reset to '${newTemporaryPassword}'.`,
     studentCode,
     email: app.email,
-    temporaryPassword: DEFAULT_STUDENT_PASSWORD,
+    temporaryPassword: newTemporaryPassword,
   };
 }

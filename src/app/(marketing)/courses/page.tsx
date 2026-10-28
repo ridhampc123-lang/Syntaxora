@@ -12,7 +12,7 @@ import { AIHighlight } from "@/components/ui/ai-highlight";
 export const metadata = {
   title: "All Courses & AI Curricula — Syntaxora",
   description:
-    "Browse our complete catalog of live interactive courses in computer vision, neural networks, robotics, and generative AI for students and professionals.",
+    "Browse our complete catalog of live interactive courses in computer vision, neural networks, applied AI, and generative AI for students and professionals.",
 };
 
 interface CoursesPageProps {
@@ -56,7 +56,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                 Interactive AI Masterclass Directory
               </span>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A] mt-1">
-                Academy <span className="text-gradient-ai">AI</span> Course Catalog
+                Academy <span className="text-gradient-ai">Artificial Intelligence</span> Course Catalog
               </h1>
             </div>
             <p className="text-sm text-[#687386] max-w-md">
@@ -176,7 +176,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                       </Button>
                     </Link>
                     <Link href={`/apply?course=${course.id}`}>
-                      <Button variant="primary" size="sm">
+                      <Button variant="ai" size="sm" className="font-bold shadow-xs">
                         Apply
                         <ArrowRight className="h-3.5 w-3.5 ml-1 arrow-icon" aria-hidden="true" />
                       </Button>

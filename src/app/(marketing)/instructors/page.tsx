@@ -39,10 +39,10 @@ export default async function InstructorsPage() {
               Instructional Leadership & Research
             </span>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#17243A]">
-              Academy <span className="text-gradient-ai">AI</span> Faculty & Mentors
+              Academy <span className="text-gradient-ai">Artificial Intelligence</span> Faculty & Mentors
             </h1>
             <p className="text-base text-[#687386] leading-relaxed font-normal">
-              Our cohorts are led by verified computer scientists, roboticists, and educators dedicated to personalized code inspection and active mentorship.
+              Our cohorts are led by verified computer scientists, machine learning researchers, and educators dedicated to personalized code inspection and active mentorship.
             </p>
           </div>
           <Link href="/courses">
@@ -141,8 +141,9 @@ export default async function InstructorsPage() {
             </div>
           </div>
           <Link href="/apply">
-            <Button variant="primary" size="md" className="shrink-0 font-semibold">
+            <Button variant="ai" size="md" className="shrink-0 font-bold shadow-sm">
               Apply to Next Cohort
+              <ArrowRight className="h-4 w-4 ml-1.5 arrow-icon" aria-hidden="true" />
             </Button>
           </Link>
         </div>

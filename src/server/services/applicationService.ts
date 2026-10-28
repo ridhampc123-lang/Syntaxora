@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { StudentApplication, ApplicationStatus } from "@/types";
 import { StudentApplicationInput } from "@/lib/validation/application";
-import { INITIAL_STUDENTS } from "./adminService";
+import { INITIAL_STUDENTS } from "./studentFixtures";
 
 function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -27,7 +27,7 @@ export const IN_MEMORY_APPLICATIONS: StudentApplication[] = [
     date_of_birth: "2011-06-15",
     age: 15,
     course_id: "c1000000-0000-0000-0000-000000000001",
-    course_title: "Applied AI for Teens: Computer Vision & Robotics",
+    course_title: "Applied AI for Teens: Computer Vision & Applied AI",
     education_level: "High School / Secondary (Ages 15–18)",
     guardian_name: "Dev Patel",
     guardian_email: "dev.patel@example.com",
@@ -496,8 +496,15 @@ export async function updateApplicationReview(
   reviewerProfileId: string,
   newStatus: ApplicationStatus,
   decisionReason?: string,
-  adminNotes?: string
-): Promise<{ success: boolean; message: string }> {
+  adminNotes?: string,
+  batchId?: string
+): Promise<{
+  success: boolean;
+  message: string;
+  studentCode?: string;
+  temporaryPassword?: string;
+  assignedBatch?: string;
+}> {
   const now = new Date().toISOString();
 
   // If approving the application, execute full student account provisioning workflow
@@ -506,7 +513,8 @@ export async function updateApplicationReview(
     const provResult = await provisionStudentFromApplication(
       applicationId,
       reviewerProfileId,
-      decisionReason
+      decisionReason,
+      batchId
     );
     if (!provResult.success) {
       return {
@@ -523,6 +531,9 @@ export async function updateApplicationReview(
     return {
       success: true,
       message: `${provResult.message}${warningMsg}`,
+      studentCode: provResult.studentCode,
+      temporaryPassword: provResult.temporaryPassword,
+      assignedBatch: provResult.assignedBatch,
     };
   }
 

@@ -1,5 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { contactFormSchema } from "@/lib/validation/contact";
+
+const createClientMock = vi.fn();
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: createClientMock,
+}));
 
 describe("Contact Form Validation Schema", () => {
   it("validates correct form inputs successfully", () => {
@@ -55,6 +61,38 @@ describe("Contact Form Validation Schema", () => {
     };
     const result = contactFormSchema.safeParse(botData);
     expect(result.success).toBe(false);
+  });
+});
+
+describe("Contact Action Behavior", () => {
+  beforeEach(() => {
+    createClientMock.mockReset();
+  });
+
+  it("returns a failure response when the database insert fails", async () => {
+    const { submitContactEnquiry } = await import("@/server/actions/contact");
+
+    createClientMock.mockResolvedValue({
+      from: vi.fn().mockReturnValue({
+        insert: vi.fn().mockResolvedValue({
+          error: new Error("Supabase insert failed"),
+        }),
+      }),
+    });
+
+    const formData = new FormData();
+    formData.set("fullName", "Jane Doe");
+    formData.set("email", "jane@example.com");
+    formData.set("phone", "+1 555-0199");
+    formData.set("subject", "Admissions inquiry");
+    formData.set("message", "I would like to learn more about the robotics track.");
+    formData.set("botField", "");
+
+    const result = await submitContactEnquiry(null, formData);
+
+    expect(result.success).toBe(false);
+    expect(result.message).toContain("could not submit your enquiry right now");
+    expect(result.values?.fullName).toBe("Jane Doe");
   });
 });
 

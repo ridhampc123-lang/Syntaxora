@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { Enrollment, EnrollmentStatus, Batch } from "@/types";
+import { Enrollment, EnrollmentStatus, Batch, Student } from "@/types";
 import { IN_MEMORY_BATCHES, getBatchById, getBatches } from "./batchService";
-import { INITIAL_STUDENTS } from "./adminService";
 import { INITIAL_ACADEMY_COURSES } from "./courseService";
 import { logAuditEvent } from "@/server/actions/admin";
 
@@ -17,6 +16,38 @@ function isSupabaseConfigured(): boolean {
   );
 }
 
+const DEFAULT_STUDENT_LIAM: Student = {
+  id: "s1000000-0000-0000-0000-000000000001",
+  student_code: "STU-8F39A1C2",
+  status: "active",
+  created_at: "2026-09-01T00:00:00Z",
+  updated_at: "2026-09-01T00:00:00Z",
+  profile: {
+    id: "u1000000-0000-0000-0000-000000000001",
+    role: "student",
+    full_name: "Liam O'Connor",
+    email: "liam.oconnor@example.com",
+    created_at: "2026-09-01T00:00:00Z",
+    updated_at: "2026-09-01T00:00:00Z",
+  },
+};
+
+const DEFAULT_STUDENT_MAYA: Student = {
+  id: "s1000000-0000-0000-0000-000000000002",
+  student_code: "STU-7B21E4F9",
+  status: "active",
+  created_at: "2026-09-01T00:00:00Z",
+  updated_at: "2026-09-01T00:00:00Z",
+  profile: {
+    id: "u1000000-0000-0000-0000-000000000002",
+    role: "student",
+    full_name: "Maya Patel",
+    email: "maya.patel@example.com",
+    created_at: "2026-09-01T00:00:00Z",
+    updated_at: "2026-09-01T00:00:00Z",
+  },
+};
+
 // In-memory enrollment store for development & testing
 export const IN_MEMORY_ENROLLMENTS: Enrollment[] = [
   {
@@ -29,7 +60,7 @@ export const IN_MEMORY_ENROLLMENTS: Enrollment[] = [
     payment_status: "verified",
     starts_at: "2026-10-01T00:00:00Z",
     created_at: "2026-09-15T00:00:00Z",
-    student: INITIAL_STUDENTS[0],
+    student: DEFAULT_STUDENT_LIAM,
     course: INITIAL_ACADEMY_COURSES[0],
     batch: IN_MEMORY_BATCHES[0],
   },
@@ -43,7 +74,7 @@ export const IN_MEMORY_ENROLLMENTS: Enrollment[] = [
     payment_status: "verified",
     starts_at: "2026-10-15T00:00:00Z",
     created_at: "2026-09-20T00:00:00Z",
-    student: INITIAL_STUDENTS[1],
+    student: DEFAULT_STUDENT_MAYA,
     course: INITIAL_ACADEMY_COURSES[1],
     batch: IN_MEMORY_BATCHES[1],
   },

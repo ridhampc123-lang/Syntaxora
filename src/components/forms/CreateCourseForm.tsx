@@ -108,7 +108,7 @@ export function CreateCourseForm() {
           name="title"
           id="courseTitle"
           required
-          placeholder="e.g. Embedded AI & ROS 2 Robotics"
+          placeholder="e.g. Applied AI & Computer Vision Foundations"
           error={state.errors?.title?.[0]}
         />
 

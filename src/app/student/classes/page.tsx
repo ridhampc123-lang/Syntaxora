@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Video,
   Clock,
-  Sparkles,
   MapPin,
   CheckCircle2,
   Calendar,
@@ -21,7 +20,7 @@ import { ClassCalendarButton } from "@/components/dashboards/ClassCalendarButton
 
 export const metadata = {
   title: "Live Classes & Virtual Labs — Syntaxora",
-  description: "Schedule of upcoming live interactive lectures and edge robotics sessions.",
+  description: "Schedule of upcoming live interactive lectures and computer vision lab sessions.",
 };
 
 export default async function StudentClassesPage() {
@@ -35,7 +34,7 @@ export default async function StudentClassesPage() {
 
   const awaitingBatch = enrollments.filter((e) => !e.batch_id);
   const activeSession = sessions.find((s) => s.status === "in_progress");
-  const nextSession = sessions.find((s) => s.status === "scheduled") || sessions[0];
+  const nextSession = sessions.find((s) => s.status === "scheduled");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -75,63 +74,67 @@ export default async function StudentClassesPage() {
       )}
 
       {/* Live Spotlight Hero Banner (If a session is active or next up) */}
-      {(activeSession || nextSession) && (
-        <div className="rounded-2xl border border-[#3869AD]/30 bg-gradient-to-r from-[#142541] via-[#1B3560] to-[#142541] text-white p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-2">
-              {activeSession ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold animate-pulse">
-                  <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  CLASSROOM IN SESSION NOW
+      {(() => {
+        const featuredSession = activeSession || nextSession;
+        if (!featuredSession) return null;
+        return (
+          <div className="rounded-2xl border border-[#3869AD]/30 bg-gradient-to-r from-[#142541] via-[#1B3560] to-[#142541] text-white p-6 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2">
+                {activeSession ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold animate-pulse">
+                    <span className="h-2 w-2 rounded-full bg-rose-400" />
+                    CLASSROOM IN SESSION NOW
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    UPCOMING SESSION
+                  </span>
+                )}
+                <span className="text-xs text-cyan-300 font-mono">
+                  {featuredSession.title}
                 </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  UPCOMING SESSION
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                {featuredSession.title}
+              </h2>
+
+              <p className="text-xs text-[#DCE4EE]/80 max-w-xl leading-relaxed">
+                {featuredSession.description || "Interactive computer vision and Python lab with live code debugging."}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 text-xs text-white/90 pt-1">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Clock className="h-3.5 w-3.5 text-cyan-300" />
+                  {new Date(featuredSession.starts_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} •{" "}
+                  {new Date(featuredSession.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(featuredSession.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST
                 </span>
-              )}
-              <span className="text-xs text-cyan-300 font-mono">
-                {activeSession ? activeSession.title : nextSession.title}
-              </span>
+                <span className="flex items-center gap-1.5 text-emerald-300 font-medium">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Syntaxora WebRTC Lab
+                </span>
+              </div>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {(activeSession || nextSession).title}
-            </h2>
-
-            <p className="text-xs text-[#DCE4EE]/80 max-w-xl leading-relaxed">
-              {(activeSession || nextSession).description || "Interactive computer vision and robotics lab with live code debugging."}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs text-white/90 pt-1">
-              <span className="flex items-center gap-1.5 font-medium">
-                <Clock className="h-3.5 w-3.5 text-cyan-300" />
-                {new Date((activeSession || nextSession).starts_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} •{" "}
-                {new Date((activeSession || nextSession).starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date((activeSession || nextSession).ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST
-              </span>
-              <span className="flex items-center gap-1.5 text-emerald-300 font-medium">
-                <MapPin className="h-3.5 w-3.5" />
-                Syntaxora WebRTC Lab
-              </span>
+            <div className="shrink-0 flex flex-col gap-2 bg-white/10 p-4 rounded-2xl border border-white/15 backdrop-blur-md">
+              <StudentJoinButton
+                sessionId={featuredSession.id}
+                sessionStatus={featuredSession.status}
+                startsAt={featuredSession.starts_at}
+                endsAt={featuredSession.ends_at}
+              />
+              <ClassCalendarButton
+                title={featuredSession.title}
+                description={featuredSession.description || ""}
+                startsAt={featuredSession.starts_at}
+                endsAt={featuredSession.ends_at}
+              />
             </div>
           </div>
-
-          <div className="shrink-0 flex flex-col gap-2 bg-white/10 p-4 rounded-2xl border border-white/15 backdrop-blur-md">
-            <StudentJoinButton
-              sessionId={(activeSession || nextSession).id}
-              sessionStatus={(activeSession || nextSession).status}
-              startsAt={(activeSession || nextSession).starts_at}
-              endsAt={(activeSession || nextSession).ends_at}
-            />
-            <ClassCalendarButton
-              title={(activeSession || nextSession).title}
-              description={(activeSession || nextSession).description || ""}
-              startsAt={(activeSession || nextSession).starts_at}
-              endsAt={(activeSession || nextSession).ends_at}
-            />
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Sessions Table */}
       <div className="rounded-2xl border border-[#DCE4EE] bg-white overflow-hidden shadow-sm">

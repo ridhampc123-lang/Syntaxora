@@ -768,7 +768,7 @@ export function AdminCourseModulesManager({ course }: Props) {
                   name="title"
                   required
                   defaultValue={currentCourse.title}
-                  placeholder="e.g. Applied AI & Python Robotics for Teens"
+                  placeholder="e.g. Applied AI & Python for Teens"
                 />
 
                 <Input
@@ -776,7 +776,7 @@ export function AdminCourseModulesManager({ course }: Props) {
                   name="slug"
                   required
                   defaultValue={currentCourse.slug}
-                  placeholder="e.g. applied-ai-python-robotics"
+                  placeholder="e.g. applied-ai-python-teens"
                   helperText="Lowercase, numbers, and dashes"
                 />
               </div>

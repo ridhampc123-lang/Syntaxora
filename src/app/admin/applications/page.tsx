@@ -7,6 +7,7 @@ import {
   detectApplicationDuplicates,
   type DuplicateDetectionResult,
 } from "@/server/services/applicationService";
+import { getBatches } from "@/server/services/batchService";
 import { AdminApplicationsTable } from "@/components/dashboards/AdminApplicationsTable";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +19,10 @@ export const metadata = {
 export default async function AdminApplicationsPage() {
   await requireRole(["admin"]);
 
-  const { applications } = await listApplications({ limit: 100 });
+  const [{ applications }, batches] = await Promise.all([
+    listApplications({ limit: 100 }),
+    getBatches(),
+  ]);
 
   // Pre-compute duplicate detection for all displayed applications
   const duplicatePairs = await Promise.all(
@@ -45,7 +49,7 @@ export default async function AdminApplicationsPage() {
           </div>
 
           <h2 className="text-2xl font-extrabold text-[#142541] tracking-tight">
-            Student Admissions Applications
+            Student <span className="text-gradient-ai">AI Admissions</span> Applications
           </h2>
           <p className="text-xs text-[#5F6F84] mt-0.5">
             Evaluate prospective academy applicants, detect duplicate records, and issue audited admission decisions.
@@ -66,6 +70,7 @@ export default async function AdminApplicationsPage() {
       <AdminApplicationsTable
         applications={applications}
         duplicateMap={duplicateMap}
+        batches={batches}
       />
     </div>
   );
